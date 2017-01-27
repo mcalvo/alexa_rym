@@ -13,7 +13,7 @@ const stateHandlers = {
         /*
          *  All Intent Handlers for state : START_MODE
          */
-        'LaunchRequest' : function () {
+        'LaunchRequest': function () {
             let message = 'Welcome to the RYM Podcast. You can say, play the audio to begin the podcast.';
             let reprompt = 'You can say, play the audio, to begin.';
 
@@ -46,7 +46,7 @@ const stateHandlers = {
 
             }.bind(this));
         },
-        'PlayAudio' : function () {
+        'PlayAudio': function () {
             if (!this.attributes.playOrder) {
                 // Initialize Attributes if undefined.
                 this.attributes.index = 0;
@@ -70,25 +70,25 @@ const stateHandlers = {
             controller.play.call(this);
             }
         },
-        'AMAZON.HelpIntent' : function () {
+        'AMAZON.HelpIntent': function () {
             var message = 'Welcome to the RYM Podcast. You can say, play the audio, to begin the podcast.';
             this.response.speak(message).listen(message);
             this.emit(':responseReady');
         },
-        'AMAZON.StopIntent' : function () {
+        'AMAZON.StopIntent': function () {
             let message = 'Good bye.';
             this.response.speak(message);
             this.emit(':responseReady');
         },
-        'AMAZON.CancelIntent' : function () {
+        'AMAZON.CancelIntent': function () {
             let message = 'Good bye.';
             this.response.speak(message);
             this.emit(':responseReady');
         },
-        'SessionEndedRequest' : function () {
+        'SessionEndedRequest': function () {
             // No session ended logic
         },
-        'Unhandled' : function () {
+        'Unhandled': function () {
             let message = 'Sorry, I could not understand. Please say, play the audio, to begin the audio.';
             this.response.speak(message).listen(message);
             this.emit(':responseReady');
@@ -98,7 +98,7 @@ const stateHandlers = {
         /*
          *  All Intent Handlers for state : PLAY_MODE
          */
-        'LaunchRequest' : function () {
+        'LaunchRequest': function () {
             /*
              *  Session resumed in PLAY_MODE STATE.
              *  If playback had finished during last session :
@@ -124,29 +124,28 @@ const stateHandlers = {
             this.response.speak(message).listen(reprompt);
             this.emit(':responseReady');
         },
-        'PlayAudio' : function () { controller.play.call(this) },
-        'AMAZON.NextIntent' : function () { controller.playNext.call(this) },
-        'AMAZON.PreviousIntent' : function () { controller.playPrevious.call(this) },
-        'AMAZON.PauseIntent' : function () { controller.stop.call(this) },
-        'AMAZON.StopIntent' : function () { controller.stop.call(this) },
-        'AMAZON.CancelIntent' : function () { controller.stop.call(this) },
-        'AMAZON.ResumeIntent' : function () { controller.play.call(this) },
-        'AMAZON.LoopOnIntent' : function () { controller.loopOn.call(this) },
-        'AMAZON.LoopOffIntent' : function () { controller.loopOff.call(this) },
-        'AMAZON.ShuffleOnIntent' : function () { controller.shuffleOn.call(this) },
-        'AMAZON.ShuffleOffIntent' : function () { controller.shuffleOff.call(this) },
-        'AMAZON.StartOverIntent' : function () { controller.startOver.call(this) },
-        'AMAZON.HelpIntent' : function () {
+        'PlayAudio': controller.play.bind(this),
+        'AMAZON.NextIntent': controller.playNext.bind(this),
+        'AMAZON.PreviousIntent': controller.playPrevious.bind(this),
+        'AMAZON.PauseIntent': controller.stop.bind(this),
+        'AMAZON.StopIntent': controller.stop.bind(this),
+        'AMAZON.CancelIntent': controller.stop.bind(this),
+        'AMAZON.ResumeIntent': controller.play.bind(this),
+        'AMAZON.LoopOnIntent': controller.loopOn.bind(this),
+        'AMAZON.LoopOffIntent': controller.loopOff.bind(this),
+        'AMAZON.ShuffleOnIntent': controller.shuffleOn.call(this),
+        'AMAZON.ShuffleOffIntent': controller.shuffleOff.call(this),
+        'AMAZON.StartOverIntent': controller.startOver.call(this),
+        'AMAZON.HelpIntent': function () {
             // This will called while audio is playing and a user says "ask <invocation_name> for help"
-            let message = 'You are listening to the AWS Podcast. You can say, Next or Previous to navigate through the playlist. ' +
-                'At any time, you can say Pause to pause the audio and Resume to resume.';
+            let message = 'You are listening to the AWS Podcast. You can say, Next or Previous to navigate through the playlist. At any time, you can say Pause to pause the audio and Resume to resume.';
             this.response.speak(message).listen(message);
             this.emit(':responseReady');
         },
-        'SessionEndedRequest' : function () {
+        'SessionEndedRequest': function () {
             // No session ended logic
         },
-        'Unhandled' : function () {
+        'Unhandled': function () {
             let message = 'Sorry, I could not understand. You can say, Next or Previous to navigate through the playlist.';
             this.response.speak(message).listen(message);
             this.emit(':responseReady');
@@ -156,48 +155,45 @@ const stateHandlers = {
         /*
          *  All Requests are received using a Remote Control. Calling corresponding handlers for each of them.
          */
-        'PlayCommandIssued' : function () { controller.play.call(this) },
-        'PauseCommandIssued' : function () { controller.stop.call(this) },
-        'NextCommandIssued' : function () { controller.playNext.call(this) },
-        'PreviousCommandIssued' : function () { controller.playPrevious.call(this) }
+        'PlayCommandIssued': controller.play.bind(this),
+        'PauseCommandIssued': controller.stop.bind(this),
+        'NextCommandIssued': controller.playNext.bind(this),
+        'PreviousCommandIssued': controller.playPrevious.bind(this)
     }),
     resumeModeIntentHandlers : Alexa.CreateStateHandler(constants.states.RESUME_MODE, {
         /*
          *  All Intent Handlers for state : RESUME_MODE
          */
-        'LaunchRequest' : function () {
+        'LaunchRequest': function () {
             let message = 'You were listening to ' + this.attributes.audioData[this.attributes.playOrder[this.attributes.index]].title +
                 ' Would you like to resume?';
             let reprompt = 'You can say yes to resume or no to play from the top.';
             this.response.speak(message).listen(reprompt);
             this.emit(':responseReady');
         },
-        'AMAZON.YesIntent' : function () { controller.play.call(this) },
-        'AMAZON.NoIntent' : function () {
-                // We can do a feed refresh on reset
-                controller.reset.call(this)
-        },
-        'AMAZON.HelpIntent' : function () {
+        'AMAZON.YesIntent': controller.play.bind(this),
+        'AMAZON.NoIntent': controller.reset.bind(this), // We can do a feed refresh on reset
+        'AMAZON.HelpIntent': function () {
             let message = 'You were listening to ' + this.attributes.audioData[this.attributes.index].title +
                 ' Would you like to resume?';
             let reprompt = 'You can say yes to resume or no to play from the top.';
             this.response.speak(message).listen(reprompt);
             this.emit(':responseReady');
         },
-        'AMAZON.StopIntent' : function () {
+        'AMAZON.StopIntent': function () {
             let message = 'Good bye.';
             this.response.speak(message);
             this.emit(':responseReady');
         },
-        'AMAZON.CancelIntent' : function () {
+        'AMAZON.CancelIntent': function () {
             let message = 'Good bye.';
             this.response.speak(message);
             this.emit(':responseReady');
         },
-        'SessionEndedRequest' : function () {
+        'SessionEndedRequest': function () {
             // No session ended logic
         },
-        'Unhandled' : function () {
+        'Unhandled': function () {
             let message = 'Sorry, this is not a valid command. Please say help to hear what you can say.';
             this.response.speak(message).listen(message);
             this.emit(':responseReady');

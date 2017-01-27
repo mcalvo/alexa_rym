@@ -23,8 +23,8 @@ const controller = {
             this.attributes['playbackFinished'] = false;
 
             // Update audioData
-            var today = new Date();
-            var dataRefresh = new Date(this.attributes.dataRefresh);
+            let today = new Date();
+            let dataRefresh = new Date(this.attributes.dataRefresh);
             if ((today - dataRefresh) >= 86400000) {
                 request(endpoint, function(error, response, body) {
                     this.attributes.audioData = JSON.parse(body);
@@ -33,16 +33,16 @@ const controller = {
                         length: this.attributes.audioData.length
                     }).map(Number.call, Number);
 
-                    var token = String(this.attributes.playOrder[this.attributes.index]);
-                    var playBehavior = 'REPLACE_ALL';
-                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                    var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
+                    let token = String(this.attributes.playOrder[this.attributes.index]);
+                    let playBehavior = 'REPLACE_ALL';
+                    let podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    let offsetInMilliseconds = this.attributes.offsetInMilliseconds;
                     // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
                     this.attributes.enqueuedToken = null;
 
                     if (utils.canThrowCard.call(this)) {
-                        var cardTitle = 'Playing ' + podcast.title;
-                        var cardContent = 'Playing ' + podcast.title + '.\n audioData = ' + this.attributes.audioData;
+                        let cardTitle = 'Playing ' + podcast.title;
+                        let cardContent = 'Playing ' + podcast.title + '.\n audioData = ' + this.attributes.audioData;
                         this.response.cardRenderer(cardTitle, cardContent, null);
                     }
 
@@ -50,16 +50,16 @@ const controller = {
                     this.emit(':responseReady');
                 }.bind(this));
             } else {
-                var token = String(this.attributes.playOrder[this.attributes.index]);
-                var playBehavior = 'REPLACE_ALL';
-                var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
+                let token = String(this.attributes.playOrder[this.attributes.index]);
+                let playBehavior = 'REPLACE_ALL';
+                let podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                let offsetInMilliseconds = this.attributes.offsetInMilliseconds;
                 // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
                 this.attributes.enqueuedToken = null;
 
                 if (utils.canThrowCard.call(this)) {
-                    var cardTitle = 'Playing ' + podcast.title;
-                    var cardContent = 'Playing ' + podcast.title;
+                    let cardTitle = 'Playing ' + podcast.title;
+                    let cardContent = 'Playing ' + podcast.title;
                     this.response.cardRenderer(cardTitle, cardContent, null);
                 }
 
@@ -67,16 +67,16 @@ const controller = {
                 this.emit(':responseReady');
             }
         } else {
-            var token = String(this.attributes.playOrder[this.attributes.index]);
-            var playBehavior = 'REPLACE_ALL';
-            var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-            var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
+            let token = String(this.attributes.playOrder[this.attributes.index]);
+            let playBehavior = 'REPLACE_ALL';
+            let podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+            let offsetInMilliseconds = this.attributes.offsetInMilliseconds;
             // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
             this.attributes.enqueuedToken = null;
 
             if (utils.canThrowCard.call(this)) {
-                var cardTitle = 'Playing ' + podcast.title;
-                var cardContent = 'Playing ' + podcast.title;
+                let cardTitle = 'Playing ' + podcast.title;
+                let cardContent = 'Playing ' + podcast.title;
                 this.response.cardRenderer(cardTitle, cardContent, null);
             }
 
@@ -98,7 +98,7 @@ const controller = {
          *  Index is computed using token stored when AudioPlayer.PlaybackStopped command is received.
          *  If reached at the end of the playlist, choose behavior based on "loop" flag.
          */
-        var index = this.attributes.index;
+        let index = this.attributes.index;
         index += 1;
         // Check for last audio file.
         if (index === this.attributes.audioData.length) {
@@ -109,12 +109,12 @@ const controller = {
                 this.handler.state = constants.states.START_MODE;
 
                 if (utils.canThrowCard.call(this)) {
-                    var cardTitle = 'Playing ' + podcast.title;
-                    var cardContent = 'Playing ' + podcast.title + '.\n audioData = ' + this.attributes.audioData;
+                    let cardTitle = 'Playing ' + podcast.title;
+                    let cardContent = 'Playing ' + podcast.title + '.\n audioData = ' + this.attributes.audioData;
                     this.response.cardRenderer(cardTitle, cardContent, null);
                 }
 
-                var message = 'You have reached at the end of the playlist.';
+                let message = 'You have reached at the end of the playlist.';
                 this.response.speak(message).audioPlayerStop();
                 return this.emit(':responseReady');
             }
@@ -132,7 +132,7 @@ const controller = {
          *  Index is computed using token stored when AudioPlayer.PlaybackStopped command is received.
          *  If reached at the end of the playlist, choose behavior based on "loop" flag.
          */
-        var index = this.attributes.index;
+        let index = this.attributes.index;
         index -= 1;
         // Check for last audio file.
         if (index === -1) {
@@ -142,7 +142,7 @@ const controller = {
                 // Reached at the end. Thus reset state to start mode and stop playing.
                 this.handler.state = constants.states.START_MODE;
 
-                var message = 'You have reached at the start of the playlist.';
+                let message = 'You have reached at the start of the playlist.';
                 this.response.speak(message).audioPlayerStop();
                 return this.emit(':responseReady');
             }
@@ -157,14 +157,14 @@ const controller = {
     loopOn: function() {
         // Turn on loop play.
         this.attributes.loop = true;
-        var message = 'Loop turned on.';
+        let message = 'Loop turned on.';
         this.response.speak(message);
         this.emit(':responseReady');
     },
     loopOff: function() {
         // Turn off looping
         this.attributes.loop = false;
-        var message = 'Loop turned off.';
+        let message = 'Loop turned off.';
         this.response.speak(message);
         this.emit(':responseReady');
     },
@@ -204,8 +204,8 @@ const controller = {
         this.attributes.playbackIndexChanged = true;
 
         // Update audioData
-        var today = new Date();
-        var dataRefresh = new Date(this.attributes.dataRefresh);
+        let today = new Date();
+        let dataRefresh = new Date(this.attributes.dataRefresh);
         if ((today - dataRefresh) >= 86400000) {
             request(endpoint, function(error, response, body) {
                 this.attributes.audioData = JSON.parse(body);
@@ -214,10 +214,10 @@ const controller = {
                     length: this.attributes.audioData.length
                 }).map(Number.call, Number);
 
-                var token = String(this.attributes.playOrder[this.attributes.index]);
-                var playBehavior = 'REPLACE_ALL';
-                var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
+                let token = String(this.attributes.playOrder[this.attributes.index]);
+                let playBehavior = 'REPLACE_ALL';
+                let podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                let offsetInMilliseconds = this.attributes.offsetInMilliseconds;
                 // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
                 this.attributes.enqueuedToken = null;
 
