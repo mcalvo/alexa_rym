@@ -1,12 +1,12 @@
 'use strict';
 
-var Alexa = require('alexa-sdk');
-var constants = require('./constants');
-var stateHandlers = require('./stateHandlers');
-var audioEventHandlers = require('./audioEventHandlers');
+const Alexa = require('alexa-sdk');
+const constants = require('./constants');
+const stateHandlers = require('./stateHandlers');
+const audioEventHandlers = require('./audioEventHandlers');
 
 exports.handler = function(event, context, callback){
-    var alexa = Alexa.handler(event, context);
+    let alexa = Alexa.handler(event, context);
     alexa.appId = constants.appId;
     alexa.dynamoDBTableName = constants.dynamoDBTableName;
     alexa.registerHandlers(

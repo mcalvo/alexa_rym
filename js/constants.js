@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 module.exports = Object.freeze({
     // App-ID. TODO: set to your own Skill App ID from the developer portal.
