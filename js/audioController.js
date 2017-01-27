@@ -15,12 +15,12 @@ const controller = {
          */
         this.handler.state = constants.states.PLAY_MODE;
 
-        if (this.attributes['playbackFinished']) {
+        if (this.attributes.playbackFinished) {
             // Reset to top of the playlist when reached end.
             this.attributes.index = 0;
             this.attributes.offsetInMilliseconds = 0;
             this.attributes.playbackIndexChanged = true;
-            this.attributes['playbackFinished'] = false;
+            this.attributes.playbackFinished = false;
 
             // Update audioData
             let today = new Date();
