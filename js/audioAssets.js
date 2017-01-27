@@ -1,8 +1,8 @@
 'use strict';
 
-var request = require('request');
+const request = require('request');
 
-var request_string = 'http://fiveqstaging.ligonier.org/podcasts/rym-minute/alexa.json';
+const request_string = 'http://fiveqstaging.ligonier.org/podcasts/rym-minute/alexa.json';
 
 request(request_string, function(error, response, body) {
     module.exports = JSON.parse(body);
