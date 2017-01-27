@@ -1,8 +1,11 @@
 'use strict';
 
 var Alexa = require('alexa-sdk');
-var audioData = require('./audioAssets');
+// var audioData = require('./audioAssets');
 var constants = require('./constants');
+var request = require('request');
+var request_string = 'http://fiveqstaging.ligonier.org/podcasts/rym-minute/alexa.json';
+
 
 var stateHandlers = {
     startModeIntentHandlers : Alexa.CreateStateHandler(constants.states.START_MODE, {
@@ -10,8 +13,11 @@ var stateHandlers = {
          *  All Intent Handlers for state : START_MODE
          */
         'LaunchRequest' : function () {
+
+            var message = 'Welcome to the RYM Podcast. You can say, play the audio to begin the podcast.';
+            var reprompt = 'You can say, play the audio, to begin.';
+
             // Initialize Attributes
-            this.attributes['playOrder'] = Array.apply(null, {length: audioData.length}).map(Number.call, Number);
             this.attributes['index'] = 0;
             this.attributes['offsetInMilliseconds'] = 0;
             this.attributes['loop'] = true;
@@ -20,16 +26,29 @@ var stateHandlers = {
             //  Change state to START_MODE
             this.handler.state = constants.states.START_MODE;
 
-            var message = 'Welcome to the AWS Podcast. You can say, play the audio to begin the podcast.';
-            var reprompt = 'You can say, play the audio, to begin.';
+            // Initialize audioData
+            var today = new Date()
+            request(request_string, function(error, response, body) {
+                this.attributes['audioData'] = JSON.parse(body);
+                this.attributes['dataRefresh'] = today.toString()
+                this.attributes['playOrder'] = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
 
-            this.response.speak(message).listen(reprompt);
-            this.emit(':responseReady');
+                message += ' The feed has been refreshed.'
+
+                if (canThrowCard.call(this)) {
+                    var cardTitle = 'Playing ' + podcast.title;
+                    var cardContent = 'Playing ' + podcast.title + '.\n audioData = ' + this.attributes.audioData;
+                    this.response.cardRenderer(cardTitle, cardContent, null);
+                }
+
+                this.response.speak(message).listen(reprompt);
+                this.emit(':responseReady');
+
+            }.bind(this));
         },
         'PlayAudio' : function () {
             if (!this.attributes['playOrder']) {
                 // Initialize Attributes if undefined.
-                this.attributes['playOrder'] = Array.apply(null, {length: audioData.length}).map(Number.call, Number);
                 this.attributes['index'] = 0;
                 this.attributes['offsetInMilliseconds'] = 0;
                 this.attributes['loop'] = true;
@@ -37,11 +56,22 @@ var stateHandlers = {
                 this.attributes['playbackIndexChanged'] = true;
                 //  Change state to START_MODE
                 this.handler.state = constants.states.START_MODE;
-            }
+
+                // Initialize audioData
+                var today = new Date()
+                request(request_string, function(error, response, body) {
+                    this.attributes['audioData'] = JSON.parse(body);
+                    this.attributes['dataRefresh'] = today.toString();
+                    this.attributes['playOrder'] = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
+
+                    controller.play.call(this);
+                }.bind(this));
+            } else {
             controller.play.call(this);
+            }
         },
         'AMAZON.HelpIntent' : function () {
-            var message = 'Welcome to the AWS Podcast. You can say, play the audio, to begin the podcast.';
+            var message = 'Welcome to the RYM Podcast. You can say, play the audio, to begin the podcast.';
             this.response.speak(message).listen(message);
             this.emit(':responseReady');
         },
@@ -86,7 +116,7 @@ var stateHandlers = {
                 reprompt = 'You can say, play the audio, to begin.';
             } else {
                 this.handler.state = constants.states.RESUME_MODE;
-                message = 'You were listening to ' + audioData[this.attributes['playOrder'][this.attributes['index']]].title +
+                message = 'You were listening to ' + this.attributes.audioData[this.attributes['playOrder'][this.attributes['index']]].title +
                     ' Would you like to resume?';
                 reprompt = 'You can say yes to resume or no to play from the top.';
             }
@@ -136,16 +166,19 @@ var stateHandlers = {
          *  All Intent Handlers for state : RESUME_MODE
          */
         'LaunchRequest' : function () {
-            var message = 'You were listening to ' + audioData[this.attributes['playOrder'][this.attributes['index']]].title +
+            var message = 'You were listening to ' + this.attributes.audioData[this.attributes['playOrder'][this.attributes['index']]].title +
                 ' Would you like to resume?';
             var reprompt = 'You can say yes to resume or no to play from the top.';
             this.response.speak(message).listen(reprompt);
             this.emit(':responseReady');
         },
         'AMAZON.YesIntent' : function () { controller.play.call(this) },
-        'AMAZON.NoIntent' : function () { controller.reset.call(this) },
+        'AMAZON.NoIntent' : function () {
+                // We can do a feed refresh on reset
+                controller.reset.call(this)
+        },
         'AMAZON.HelpIntent' : function () {
-            var message = 'You were listening to ' + audioData[this.attributes['index']].title +
+            var message = 'You were listening to ' + this.attributes.audioData[this.attributes['index']].title +
                 ' Would you like to resume?';
             var reprompt = 'You can say yes to resume or no to play from the top.';
             this.response.speak(message).listen(reprompt);
@@ -191,23 +224,66 @@ var controller = function () {
                 this.attributes['offsetInMilliseconds'] = 0;
                 this.attributes['playbackIndexChanged'] = true;
                 this.attributes['playbackFinished'] = false;
+
+                // Update audioData
+                var today = new Date();
+                var dataRefresh = new Date(this.attributes.dataRefresh);
+                if ((today - dataRefresh) >= 86400000) {
+                    request(request_string, function(error, response, body) {
+                        this.attributes['audioData'] = JSON.parse(body);
+                        this.attributes['dataRefresh'] = today.toString()
+                        this.attributes['playOrder'] = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
+
+                        var token = String(this.attributes['playOrder'][this.attributes['index']]);
+                        var playBehavior = 'REPLACE_ALL';
+                        var podcast = this.attributes.audioData[this.attributes['playOrder'][this.attributes['index']]];
+                        var offsetInMilliseconds = this.attributes['offsetInMilliseconds'];
+                        // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
+                        this.attributes['enqueuedToken'] = null;
+
+                        if (canThrowCard.call(this)) {
+                            var cardTitle = 'Playing ' + podcast.title;
+                            var cardContent = 'Playing ' + podcast.title + '.\n audioData = ' + this.attributes.audioData;
+                            this.response.cardRenderer(cardTitle, cardContent, null);
+                        }
+
+                        this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
+                        this.emit(':responseReady');
+                    }.bind(this));
+                } else {
+                    var token = String(this.attributes['playOrder'][this.attributes['index']]);
+                    var playBehavior = 'REPLACE_ALL';
+                    var podcast = this.attributes.audioData[this.attributes['playOrder'][this.attributes['index']]];
+                    var offsetInMilliseconds = this.attributes['offsetInMilliseconds'];
+                    // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
+                    this.attributes['enqueuedToken'] = null;
+
+                    if (canThrowCard.call(this)) {
+                        var cardTitle = 'Playing ' + podcast.title;
+                        var cardContent = 'Playing ' + podcast.title;
+                        this.response.cardRenderer(cardTitle, cardContent, null);
+                    }
+
+                    this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
+                    this.emit(':responseReady');
+                }
+            } else {
+                var token = String(this.attributes['playOrder'][this.attributes['index']]);
+                var playBehavior = 'REPLACE_ALL';
+                var podcast = this.attributes.audioData[this.attributes['playOrder'][this.attributes['index']]];
+                var offsetInMilliseconds = this.attributes['offsetInMilliseconds'];
+                // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
+                this.attributes['enqueuedToken'] = null;
+
+                if (canThrowCard.call(this)) {
+                    var cardTitle = 'Playing ' + podcast.title;
+                    var cardContent = 'Playing ' + podcast.title;
+                    this.response.cardRenderer(cardTitle, cardContent, null);
+                }
+
+                this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
+                this.emit(':responseReady');
             }
-
-            var token = String(this.attributes['playOrder'][this.attributes['index']]);
-            var playBehavior = 'REPLACE_ALL';
-            var podcast = audioData[this.attributes['playOrder'][this.attributes['index']]];
-            var offsetInMilliseconds = this.attributes['offsetInMilliseconds'];
-            // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
-            this.attributes['enqueuedToken'] = null;
-
-            if (canThrowCard.call(this)) {
-                var cardTitle = 'Playing ' + podcast.title;
-                var cardContent = 'Playing ' + podcast.title;
-                this.response.cardRenderer(cardTitle, cardContent, null);
-            }
-
-            this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
-            this.emit(':responseReady');
         },
         stop: function () {
             /*
@@ -226,12 +302,18 @@ var controller = function () {
             var index = this.attributes['index'];
             index += 1;
             // Check for last audio file.
-            if (index === audioData.length) {
+            if (index === this.attributes.audioData.length) {
                 if (this.attributes['loop']) {
                     index = 0;
                 } else {
                     // Reached at the end. Thus reset state to start mode and stop playing.
                     this.handler.state = constants.states.START_MODE;
+
+                    if (canThrowCard.call(this)) {
+                        var cardTitle = 'Playing ' + podcast.title;
+                        var cardContent = 'Playing ' + podcast.title + '.\n audioData = ' + this.attributes.audioData;
+                        this.response.cardRenderer(cardTitle, cardContent, null);
+                    }
 
                     var message = 'You have reached at the end of the playlist.';
                     this.response.speak(message).audioPlayerStop();
@@ -256,7 +338,7 @@ var controller = function () {
             // Check for last audio file.
             if (index === -1) {
                 if (this.attributes['loop']) {
-                    index = audioData.length - 1;
+                    index = this.attributes.audioData.length - 1;
                 } else {
                     // Reached at the end. Thus reset state to start mode and stop playing.
                     this.handler.state = constants.states.START_MODE;
@@ -300,12 +382,12 @@ var controller = function () {
             });
         },
         shuffleOff: function () {
-            // Turn off shuffle play. 
+            // Turn off shuffle play.
             if (this.attributes['shuffle']) {
                 this.attributes['shuffle'] = false;
                 // Although changing index, no change in audio file being played as the change is to account for reordering playOrder
                 this.attributes['index'] = this.attributes['playOrder'][this.attributes['index']];
-                this.attributes['playOrder'] = Array.apply(null, {length: audioData.length}).map(Number.call, Number);
+                this.attributes['playOrder'] = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
             }
             controller.play.call(this);
         },
@@ -319,7 +401,28 @@ var controller = function () {
             this.attributes['index'] = 0;
             this.attributes['offsetInMilliseconds'] = 0;
             this.attributes['playbackIndexChanged'] = true;
-            controller.play.call(this);
+
+            // Update audioData
+            var today = new Date();
+            var dataRefresh = new Date(this.attributes.dataRefresh);
+            if ((today - dataRefresh) >= 86400000) {
+                request(request_string, function(error, response, body) {
+                    this.attributes['audioData'] = JSON.parse(body);
+                    this.attributes['dataRefresh'] = today.toString()
+                    this.attributes['playOrder'] = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
+
+                    var token = String(this.attributes['playOrder'][this.attributes['index']]);
+                    var playBehavior = 'REPLACE_ALL';
+                    var podcast = this.attributes.audioData[this.attributes['playOrder'][this.attributes['index']]];
+                    var offsetInMilliseconds = this.attributes['offsetInMilliseconds'];
+                    // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
+                    this.attributes['enqueuedToken'] = null;
+
+                    controller.play.call(this);
+                }.bind(this));
+            } else {
+                controller.play.call(this);
+            }
         }
     }
 }();
@@ -340,7 +443,7 @@ function canThrowCard() {
 
 function shuffleOrder(callback) {
     // Algorithm : Fisher-Yates shuffle
-    var array = Array.apply(null, {length: audioData.length}).map(Number.call, Number);
+    var array = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
     var currentIndex = array.length;
     var temp, randomIndex;
 

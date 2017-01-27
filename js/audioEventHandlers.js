@@ -1,7 +1,7 @@
 'use strict';
 
 var Alexa = require('alexa-sdk');
-var audioData = require('./audioAssets');
+//var audioData = require('./audioAssets');
 var constants = require('./constants');
 
 // Binding audio handlers to PLAY_MODE State since they are expected only in this mode.
@@ -53,11 +53,11 @@ var audioEventHandlers = Alexa.CreateStateHandler(constants.states.PLAY_MODE, {
              */
             return this.context.succeed(true);
         }
-        
+
         var enqueueIndex = this.attributes['index'];
         enqueueIndex +=1;
         // Checking if  there are any items to be enqueued.
-        if (enqueueIndex === audioData.length) {
+        if (enqueueIndex === this.attributes.audioData.length) {
             if (this.attributes['loop']) {
                 // Enqueueing the first item since looping is enabled.
                 enqueueIndex = 0;
@@ -71,10 +71,10 @@ var audioEventHandlers = Alexa.CreateStateHandler(constants.states.PLAY_MODE, {
 
         var enqueueToken = this.attributes['enqueuedToken'];
         var playBehavior = 'ENQUEUE';
-        var podcast = audioData[this.attributes['playOrder'][enqueueIndex]];
+        var podcast = this.attributes.audioData[this.attributes['playOrder'][enqueueIndex]];
         var expectedPreviousToken = this.attributes['token'];
         var offsetInMilliseconds = 0;
-        
+
         this.response.audioPlayerPlay(playBehavior, podcast.url, enqueueToken, expectedPreviousToken, offsetInMilliseconds);
         this.emit(':responseReady');
     },
