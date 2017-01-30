@@ -7,9 +7,24 @@ const controller = require('./audioController');
 const utils = require('./utils');
 const endpoint = 'http://fiveqstaging.ligonier.org/podcasts/rym-minute/alexa.json';
 
+function initializeSession(body) {
+    let today = new Date();
+    this.attributes.index = 0;
+    this.attributes.offsetInMilliseconds = 0;
+    this.attributes.loop = true;
+    this.attributes.shuffle = false;
+    this.attributes.playbackIndexChanged = true;
+    this.handler.state = constants.states.START_MODE;
+    this.attributes.audioData = JSON.parse(body);
+    this.attributes.dataRefresh = today.toString();
+    this.attributes.playOrder = Array.apply(null, {
+        length: this.attributes.audioData.length
+    }).map(Number.call, Number);
+}
 
 const stateHandlers = {
-    startModeIntentHandlers : Alexa.CreateStateHandler(constants.states.START_MODE, {
+
+    startModeIntentHandlers: Alexa.CreateStateHandler(constants.states.START_MODE, {
         /*
          *  All Intent Handlers for state : START_MODE
          */
@@ -17,22 +32,8 @@ const stateHandlers = {
             let message = 'Welcome to the RYM Podcast. You can say, play the audio to begin the podcast.';
             let reprompt = 'You can say, play the audio, to begin.';
 
-            // Initialize Attributes
-            this.attributes.index = 0;
-            this.attributes.offsetInMilliseconds = 0;
-            this.attributes.loop = true;
-            this.attributes.shuffle = false;
-            this.attributes.playbackIndexChanged = true;
-            //  Change state to START_MODE
-            this.handler.state = constants.states.START_MODE;
-
-            // Initialize audioData
-            let today = new Date();
             request(endpoint, function(error, response, body) {
-                this.attributes.audioData = JSON.parse(body);
-                this.attributes.dataRefresh = today.toString();
-                this.attributes.playOrder = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
-
+                initializeSession.call(this, body);
                 message += ' The feed has been refreshed.'
 
                 if (utils.canThrowCard.call(this)) {
@@ -43,31 +44,16 @@ const stateHandlers = {
 
                 this.response.speak(message).listen(reprompt);
                 this.emit(':responseReady');
-
             }.bind(this));
         },
         'PlayAudio': function () {
             if (!this.attributes.playOrder) {
-                // Initialize Attributes if undefined.
-                this.attributes.index = 0;
-                this.attributes.offsetInMilliseconds = 0;
-                this.attributes.loop = true;
-                this.attributes.shuffle = false;
-                this.attributes.playbackIndexChanged = true;
-                //  Change state to START_MODE
-                this.handler.state = constants.states.START_MODE;
-
-                // Initialize audioData
-                let today = new Date();
                 request(endpoint, function(error, response, body) {
-                    this.attributes.audioData = JSON.parse(body);
-                    this.attributes.dataRefresh = today.toString();
-                    this.attributes.playOrder = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
-
+                    initializeSession.call(this, body);
                     controller.play.call(this);
                 }.bind(this));
             } else {
-            controller.play.call(this);
+                controller.play.call(this);
             }
         },
         'AMAZON.HelpIntent': function () {
@@ -94,7 +80,8 @@ const stateHandlers = {
             this.emit(':responseReady');
         }
     }),
-    playModeIntentHandlers : Alexa.CreateStateHandler(constants.states.PLAY_MODE, {
+
+    playModeIntentHandlers: Alexa.CreateStateHandler(constants.states.PLAY_MODE, {
         /*
          *  All Intent Handlers for state : PLAY_MODE
          */
@@ -151,7 +138,8 @@ const stateHandlers = {
             this.emit(':responseReady');
         }
     }),
-    remoteControllerHandlers : Alexa.CreateStateHandler(constants.states.PLAY_MODE, {
+
+    remoteControllerHandlers: Alexa.CreateStateHandler(constants.states.PLAY_MODE, {
         /*
          *  All Requests are received using a Remote Control. Calling corresponding handlers for each of them.
          */
@@ -160,7 +148,8 @@ const stateHandlers = {
         'NextCommandIssued': controller.playNext.bind(this),
         'PreviousCommandIssued': controller.playPrevious.bind(this)
     }),
-    resumeModeIntentHandlers : Alexa.CreateStateHandler(constants.states.RESUME_MODE, {
+
+    resumeModeIntentHandlers: Alexa.CreateStateHandler(constants.states.RESUME_MODE, {
         /*
          *  All Intent Handlers for state : RESUME_MODE
          */
