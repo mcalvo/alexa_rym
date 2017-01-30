@@ -5,7 +5,7 @@ const request = require('request');
 const constants = require('./constants');
 const controller = require('./audioController');
 const utils = require('./utils');
-const request_string = 'http://fiveqstaging.ligonier.org/podcasts/rym-minute/alexa.json';
+const endpoint = 'http://fiveqstaging.ligonier.org/podcasts/rym-minute/alexa.json';
 
 
 const stateHandlers = {
@@ -28,7 +28,7 @@ const stateHandlers = {
 
             // Initialize audioData
             let today = new Date();
-            request(request_string, function(error, response, body) {
+            request(endpoint, function(error, response, body) {
                 this.attributes.audioData = JSON.parse(body);
                 this.attributes.dataRefresh = today.toString();
                 this.attributes.playOrder = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
@@ -59,7 +59,7 @@ const stateHandlers = {
 
                 // Initialize audioData
                 let today = new Date();
-                request(request_string, function(error, response, body) {
+                request(endpoint, function(error, response, body) {
                     this.attributes.audioData = JSON.parse(body);
                     this.attributes.dataRefresh = today.toString();
                     this.attributes.playOrder = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
@@ -133,9 +133,9 @@ const stateHandlers = {
         'AMAZON.ResumeIntent': controller.play.bind(this),
         'AMAZON.LoopOnIntent': controller.loopOn.bind(this),
         'AMAZON.LoopOffIntent': controller.loopOff.bind(this),
-        'AMAZON.ShuffleOnIntent': controller.shuffleOn.call(this),
-        'AMAZON.ShuffleOffIntent': controller.shuffleOff.call(this),
-        'AMAZON.StartOverIntent': controller.startOver.call(this),
+        'AMAZON.ShuffleOnIntent': controller.shuffleOn.bind(this),
+        'AMAZON.ShuffleOffIntent': controller.shuffleOff.bind(this),
+        'AMAZON.StartOverIntent': controller.startOver.bind(this),
         'AMAZON.HelpIntent': function () {
             // This will called while audio is playing and a user says "ask <invocation_name> for help"
             let message = 'You are listening to the AWS Podcast. You can say, Next or Previous to navigate through the playlist. At any time, you can say Pause to pause the audio and Resume to resume.';
