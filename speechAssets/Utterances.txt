@@ -9,3 +9,9 @@ PlayAudio turn on RefNet Christian radio
 PlayAudio begin RefNet
 PlayAudio begin RefNet Christian radio
 PlayAudio begin the reformation network
+AboutIntent tell me about Renewing Your Mind
+AboutIntent tell me about rym
+AboutIntent about rym
+TodayIntent play todays episode
+TodayIntent play the episode for today
+TodayIntent play today

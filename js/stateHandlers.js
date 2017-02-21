@@ -4,8 +4,22 @@ const Alexa = require('alexa-sdk');
 const request = require('request');
 const constants = require('./constants');
 const utils = require('./utils');
-const request_string = 'http://fiveqstaging.ligonier.org/podcasts/rym-minute/alexa.json';
+const request_string = 'http://fiveqstaging.ligonier.org/podcasts/renewing-your-mind/alexa.json';
 
+function initializeSession(body) {
+    let today = new Date();
+    this.attributes.index = 0;
+    this.attributes.offsetInMilliseconds = 0;
+    this.attributes.loop = false;
+    this.attributes.shuffle = false;
+    this.attributes.playbackIndexChanged = true;
+    this.handler.state = constants.states.START_MODE;
+    this.attributes.audioData = JSON.parse(body);
+    this.attributes.dataRefresh = today.toString();
+    this.attributes.playOrder = Array.apply(null, {
+        length: this.attributes.audioData.length
+    }).map(Number.call, Number);
+}
 
 const stateHandlers = {
     startModeIntentHandlers : Alexa.CreateStateHandler(constants.states.START_MODE, {
@@ -13,83 +27,80 @@ const stateHandlers = {
          *  All Intent Handlers for state : START_MODE
          */
         'LaunchRequest' : function () {
-            let message = 'Welcome to the RYM Podcast. You can say, play the audio to begin the podcast.';
-            let reprompt = 'You can say, play the audio, to begin.';
-
-            // Initialize Attributes
-            this.attributes.index = 0;
-            this.attributes.offsetInMilliseconds = 0;
-            this.attributes.loop = true;
-            this.attributes.shuffle = false;
-            this.attributes.playbackIndexChanged = true;
-            //  Change state to START_MODE
-            this.handler.state = constants.states.START_MODE;
-
-            // Initialize audioData
             let today = new Date();
-            request(request_string, function(error, response, body) {
-                this.attributes.audioData = JSON.parse(body);
-                this.attributes.dataRefresh = today.toString()
-                this.attributes.playOrder = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
+            if (this.attributes.dataRefresh){
+                let dr = new Date(this.attributes.dataRefresh);
+                if (dr < today) {
+                    request(request_string, function(error, response, body) {
+                        initializeSession.call(this, body);
 
-                message += ' The feed has been refreshed.'
+                        var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                if (utils.canThrowCard.call(this)) {
-                    let cardTitle = 'Playing ' + podcast.title;
-                    let cardContent = 'Playing ' + podcast.title + '.\n audioData = ' + this.attributes.audioData;
-                    this.response.cardRenderer(cardTitle, cardContent, null);
+                        this.response.speak(message);
+                        controller.play.call(this);
+                    }.bind(this));
+                } else {
+                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    controller.play.call(this);
                 }
+            } else {
+                request(request_string, function(error, response, body) {
+                    initializeSession.call(this, body);
 
-                this.response.speak(message).listen(reprompt);
-                this.emit(':responseReady');
+                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-            }.bind(this));
+                    this.response.speak(message);
+                    controller.play.call(this);
+                }.bind(this));
+            }
         },
         'PlayAudio' : function () {
             if (!this.attributes.playOrder) {
-                // Initialize Attributes if undefined.
-                this.attributes.index = 0;
-                this.attributes.offsetInMilliseconds = 0;
-                this.attributes.loop = true;
-                this.attributes.shuffle = false;
-                this.attributes.playbackIndexChanged = true;
-                //  Change state to START_MODE
-                this.handler.state = constants.states.START_MODE;
-
-                // Initialize audioData
-                let today = new Date();
                 request(request_string, function(error, response, body) {
-                    this.attributes.audioData = JSON.parse(body);
-                    this.attributes.dataRefresh = today.toString();
-                    this.attributes.playOrder = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
-
+                    initializeSession.call(this, body);
                     controller.play.call(this);
                 }.bind(this));
             } else {
-            controller.play.call(this);
+                controller.play.call(this);
             }
         },
         'AMAZON.HelpIntent' : function () {
-            var message = 'Welcome to the RYM Podcast. You can say, play the audio, to begin the podcast.';
+            var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+
+            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier broadcast, say Next. To return to the most recent broadcast, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?'
             this.response.speak(message).listen(message);
             this.emit(':responseReady');
         },
-        'AMAZON.StopIntent' : function () {
-            let message = 'Good bye.';
+        'AboutIntent': function() {
+            var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We know that God uses his Word to change lives. In Romans 12:2, Paul tells Christians to \"be transformed by the renewal of your mind\". That is our aim. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
             this.response.speak(message);
             this.emit(':responseReady');
         },
+        'TodayIntent': function() {
+            request(request_string, function(error, response, body) {
+                initializeSession.call(this, body);
+
+                var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                controller.play.call(this);
+            }.bind(this));
+        },
+        'AMAZON.StopIntent' : function () {
+            controller.stop.call(this);
+            this.emit(':responseReady');
+        },
         'AMAZON.CancelIntent' : function () {
-            let message = 'Good bye.';
-            this.response.speak(message);
+            controller.stop.call(this);
             this.emit(':responseReady');
         },
         'SessionEndedRequest' : function () {
             // No session ended logic
         },
         'Unhandled' : function () {
-            let message = 'Sorry, I could not understand. Please say, play the audio, to begin the audio.';
-            this.response.speak(message).listen(message);
+            let message = 'Sorry, I could not understand.';
+            this.response.speak(message);
             this.emit(':responseReady');
         }
     }),
@@ -109,19 +120,45 @@ const stateHandlers = {
              */
             let message;
             let reprompt;
+            let today = new Date();
             if (this.attributes['playbackFinished']) {
-                this.handler.state = constants.states.START_MODE;
-                message = 'Welcome to the AWS Podcast. You can say, play the audio to begin the podcast.';
-                reprompt = 'You can say, play the audio, to begin.';
+                if (this.attributes.dataRefresh){
+                    let dr = new Date(this.attributes.dataRefresh);
+                    if (dr != today) {
+                        request(request_string, function(error, response, body) {
+                            initializeSession.call(this, body);
+
+                            var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                            let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+
+                            this.response.speak(message);
+                            controller.play.call(this);
+                        }.bind(this));
+                    } else {
+                        var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                        controller.play.call(this);
+                    }
+                } else {
+                    request(request_string, function(error, response, body) {
+                        initializeSession.call(this, body);
+
+                        var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+
+                        this.response.speak(message);
+                        controller.play.call(this);
+                    }.bind(this));
+                }
             } else {
                 this.handler.state = constants.states.RESUME_MODE;
-                message = 'You were listening to ' + this.attributes.audioData[this.attributes.playOrder[this.attributes.index]].title +
-                    ' Would you like to resume?';
-                reprompt = 'You can say yes to resume or no to play from the top.';
-            }
+                var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                message = 'Welcome back to Renewing Your Mind. Previously you were listening to the broadcast from ' + podcast.date + ' titled ' + podcast.title + '. Would you like to resume that broadcast? Say yes to resume, or no to play today\'s broadcast.';
+                reprompt = 'Say yes to resume the broadcast from ' + podcast.date + ' titled ' + podcast.title + ', or say no to play today\'s broadcast.';
 
-            this.response.speak(message).listen(reprompt);
-            this.emit(':responseReady');
+                this.response.speak(message).listen(reprompt);
+                this.emit(':responseReady');
+            }
         },
         'PlayAudio' : function () { controller.play.call(this) },
         'AMAZON.NextIntent' : function () { controller.playNext.call(this) },
@@ -130,24 +167,77 @@ const stateHandlers = {
         'AMAZON.StopIntent' : function () { controller.stop.call(this) },
         'AMAZON.CancelIntent' : function () { controller.stop.call(this) },
         'AMAZON.ResumeIntent' : function () { controller.play.call(this) },
-        'AMAZON.LoopOnIntent' : function () { controller.loopOn.call(this) },
-        'AMAZON.LoopOffIntent' : function () { controller.loopOff.call(this) },
-        'AMAZON.ShuffleOnIntent' : function () { controller.shuffleOn.call(this) },
-        'AMAZON.ShuffleOffIntent' : function () { controller.shuffleOff.call(this) },
-        'AMAZON.StartOverIntent' : function () { controller.startOver.call(this) },
+        'AMAZON.LoopOnIntent': function() {
+            var message = 'Sorry. This skill does not support looping.';
+            this.response.speak(message);
+            this.emit(':responseReady');
+        },
+        'AMAZON.LoopOffIntent' : function () {
+            var message = 'Sorry. This skill does not support looping.';
+            this.response.speak(message);
+            this.emit(':responseReady');
+        },
+        'AMAZON.ShuffleOnIntent' : function () {
+            var message = 'Sorry. This skill does not support shuffling.';
+            this.response.speak(message);
+            this.emit(':responseReady');
+        },
+        'AMAZON.ShuffleOffIntent' : function () {
+            var message = 'Sorry. This skill does not support shuffling.';
+            this.response.speak(message);
+            this.emit(':responseReady');
+        },
+        'AMAZON.StartOverIntent' : function () {
+            controller.startOver.call(this)
+        },
         'AMAZON.HelpIntent' : function () {
-            // This will called while audio is playing and a user says "ask <invocation_name> for help"
-            let message = 'You are listening to the AWS Podcast. You can say, Next or Previous to navigate through the playlist. ' +
-                'At any time, you can say Pause to pause the audio and Resume to resume.';
+            var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+
+            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier broadcast, say Next. To Return to the most recent broadcast, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?'
             this.response.speak(message).listen(message);
             this.emit(':responseReady');
+        },
+        'AboutIntent': function() {
+            var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We know that God uses his Word to change lives. In Romans 12:2, Paul tells Christians to \"be transformed by the renewal of your mind\". That is our aim. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
+            this.response.speak(message);
+            this.emit(':responseReady');
+        },
+        'TodayIntent': function() {
+            if (this.attributes.dataRefresh){
+                let dr = new Date(this.attributes.dataRefresh);
+                if (dr != today) {
+                    request(request_string, function(error, response, body) {
+                        initializeSession.call(this, body);
+
+                        var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+
+                        this.response.speak(message);
+                        controller.play.call(this);
+                    }.bind(this));
+                } else {
+                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    controller.play.call(this);
+                }
+            } else {
+                request(request_string, function(error, response, body) {
+                    initializeSession.call(this, body);
+
+                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+
+                    this.response.speak(message);
+                    controller.play.call(this);
+                }.bind(this));
+            }
         },
         'SessionEndedRequest' : function () {
             // No session ended logic
         },
         'Unhandled' : function () {
-            let message = 'Sorry, I could not understand. You can say, Next or Previous to navigate through the playlist.';
-            this.response.speak(message).listen(message);
+            let message = 'Sorry, I could not understand.';
+            this.response.speak(message);
             this.emit(':responseReady');
         }
     }),
@@ -179,26 +269,24 @@ const stateHandlers = {
         'AMAZON.HelpIntent' : function () {
             let message = 'You were listening to ' + this.attributes.audioData[this.attributes.index].title +
                 ' Would you like to resume?';
-            let reprompt = 'You can say yes to resume or no to play from the top.';
+            let reprompt = 'You can say, yes to resume or no to play from the top.';
             this.response.speak(message).listen(reprompt);
             this.emit(':responseReady');
         },
         'AMAZON.StopIntent' : function () {
-            let message = 'Good bye.';
-            this.response.speak(message);
+            controller.stop.call(this);
             this.emit(':responseReady');
         },
         'AMAZON.CancelIntent' : function () {
-            let message = 'Good bye.';
-            this.response.speak(message);
+            controller.stop.call(this);
             this.emit(':responseReady');
         },
         'SessionEndedRequest' : function () {
             // No session ended logic
         },
         'Unhandled' : function () {
-            let message = 'Sorry, this is not a valid command. Please say help to hear what you can say.';
-            this.response.speak(message).listen(message);
+            let message = 'Sorry, I could not understand.';
+            this.response.speak(message);
             this.emit(':responseReady');
         }
     })
@@ -218,38 +306,9 @@ var controller = function () {
             this.handler.state = constants.states.PLAY_MODE;
 
             if (this.attributes['playbackFinished']) {
-                // Reset to top of the playlist when reached end.
-                this.attributes.index = 0;
-                this.attributes.offsetInMilliseconds = 0;
-                this.attributes.playbackIndexChanged = true;
-                this.attributes['playbackFinished'] = false;
+                request(request_string, function(error, response, body) {
+                    initializeSession.call(this, body);
 
-                // Update audioData
-                var today = new Date();
-                var dataRefresh = new Date(this.attributes.dataRefresh);
-                if ((today - dataRefresh) >= 86400000) {
-                    request(request_string, function(error, response, body) {
-                        this.attributes.audioData = JSON.parse(body);
-                        this.attributes.dataRefresh = today.toString()
-                        this.attributes.playOrder = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
-
-                        var token = String(this.attributes.playOrder[this.attributes.index]);
-                        var playBehavior = 'REPLACE_ALL';
-                        var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                        var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
-                        // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
-                        this.attributes.enqueuedToken = null;
-
-                        if (utils.canThrowCard.call(this)) {
-                            var cardTitle = 'Playing ' + podcast.title;
-                            var cardContent = 'Playing ' + podcast.title + '.\n audioData = ' + this.attributes.audioData;
-                            this.response.cardRenderer(cardTitle, cardContent, null);
-                        }
-
-                        this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
-                        this.emit(':responseReady');
-                    }.bind(this));
-                } else {
                     var token = String(this.attributes.playOrder[this.attributes.index]);
                     var playBehavior = 'REPLACE_ALL';
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -258,14 +317,14 @@ var controller = function () {
                     this.attributes.enqueuedToken = null;
 
                     if (utils.canThrowCard.call(this)) {
-                        var cardTitle = 'Playing ' + podcast.title;
-                        var cardContent = 'Playing ' + podcast.title;
+                        var cardTitle = podcast.title + '(' + podcast.date + ')';
+                        var cardContent = podcast.description + 'The feed has been refreshed.' + '\n' + this.attributes.dataRefresh;
                         this.response.cardRenderer(cardTitle, cardContent, null);
                     }
 
                     this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
                     this.emit(':responseReady');
-                }
+                }.bind(this));
             } else {
                 var token = String(this.attributes.playOrder[this.attributes.index]);
                 var playBehavior = 'REPLACE_ALL';
@@ -275,8 +334,8 @@ var controller = function () {
                 this.attributes.enqueuedToken = null;
 
                 if (utils.canThrowCard.call(this)) {
-                    var cardTitle = 'Playing ' + podcast.title;
-                    var cardContent = 'Playing ' + podcast.title;
+                    var cardTitle = podcast.title + '(' + podcast.date + ')';
+                    var cardContent = podcast.description + '\n' + this.attributes.dataRefresh;
                     this.response.cardRenderer(cardTitle, cardContent, null);
                 }
 
@@ -309,12 +368,12 @@ var controller = function () {
                     this.handler.state = constants.states.START_MODE;
 
                     if (utils.canThrowCard.call(this)) {
-                        var cardTitle = 'Playing ' + podcast.title;
-                        var cardContent = 'Playing ' + podcast.title + '.\n audioData = ' + this.attributes.audioData;
+                        var cardTitle = podcast.title + '(' + podcast.date + ')';
+                        var cardContent = podcast.description;
                         this.response.cardRenderer(cardTitle, cardContent, null);
                     }
 
-                    var message = 'You have reached at the end of the playlist.';
+                    var message = 'You have reached the last available broadcast. Visit Renewing Your Mind dot org to access older broadcasts';
                     this.response.speak(message).audioPlayerStop();
                     return this.emit(':responseReady');
                 }
@@ -342,7 +401,7 @@ var controller = function () {
                     // Reached at the end. Thus reset state to start mode and stop playing.
                     this.handler.state = constants.states.START_MODE;
 
-                    var message = 'You have reached at the start of the playlist.';
+                    var message = 'You are listening to the most recent broadcast.';
                     this.response.speak(message).audioPlayerStop();
                     return this.emit(':responseReady');
                 }
@@ -396,32 +455,19 @@ var controller = function () {
             controller.play.call(this);
         },
         reset: function () {
-            // Reset to top of the playlist.
-            this.attributes.index = 0;
-            this.attributes.offsetInMilliseconds = 0;
-            this.attributes.playbackIndexChanged = true;
-
             // Update audioData
-            var today = new Date();
-            var dataRefresh = new Date(this.attributes.dataRefresh);
-            if ((today - dataRefresh) >= 86400000) {
-                request(request_string, function(error, response, body) {
-                    this.attributes.audioData = JSON.parse(body);
-                    this.attributes.dataRefresh = today.toString()
-                    this.attributes.playOrder = Array.apply(null, {length: this.attributes.audioData.length}).map(Number.call, Number);
+            request(request_string, function(error, response, body) {
+                initializeSession.call(this, body);
+                var token = String(this.attributes.playOrder[this.attributes.index]);
+                var playBehavior = 'REPLACE_ALL';
+                var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
+                this.attributes.playbackIndexChanged = true;
+                // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
+                this.attributes.enqueuedToken = null;
 
-                    var token = String(this.attributes.playOrder[this.attributes.index]);
-                    var playBehavior = 'REPLACE_ALL';
-                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                    var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
-                    // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
-                    this.attributes.enqueuedToken = null;
-
-                    controller.play.call(this);
-                }.bind(this));
-            } else {
                 controller.play.call(this);
-            }
+            }.bind(this));
         }
     }
 }();
