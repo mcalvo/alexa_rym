@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = Object.freeze({
-    // App-ID. TODO: set to your own Skill App ID from the developer portal.
+    // App-ID. Set to your own Skill App ID from the developer portal.
     appId : 'amzn1.ask.skill.2530a1d2-cfe2-4af8-9b21-b1e9267e7d73',
     // MIKE: 'amzn1.ask.skill.7b76b3f9-c9f6-4307-bfaa-4aa93ef72e36',
     // TYLER: 'amzn1.ask.skill.2530a1d2-cfe2-4af8-9b21-b1e9267e7d73',

@@ -80,12 +80,35 @@ const stateHandlers = {
             this.emit(':responseReady');
         },
         'TodayIntent': function() {
-            request(request_string, function(error, response, body) {
-                initializeSession.call(this, body);
+            let today = new Date();
+            if (this.attributes.dataRefresh){
+                let dr = new Date(this.attributes.dataRefresh);
+                if (dr != today) {
+                    request(request_string, function(error, response, body) {
+                        initializeSession.call(this, body);
 
-                var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                controller.play.call(this);
-            }.bind(this));
+                        var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+
+                        this.response.speak(message);
+                        controller.play.call(this);
+                    }.bind(this));
+                } else {
+                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    controller.play.call(this);
+                }
+            } else {
+                request(request_string, function(error, response, body) {
+                    initializeSession.call(this, body);
+
+                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+
+                    this.response.speak(message);
+                    controller.play.call(this);
+                }.bind(this));
+            }
         },
         'AMAZON.StopIntent' : function () {
             controller.stop.call(this);
@@ -161,8 +184,8 @@ const stateHandlers = {
             }
         },
         'PlayAudio' : function () { controller.play.call(this) },
-        'AMAZON.NextIntent' : function () { controller.playNext.call(this) },
-        'AMAZON.PreviousIntent' : function () { controller.playPrevious.call(this) },
+        'AMAZON.NextIntent' : function () { controller.cNext.call(this) },
+        'AMAZON.PreviousIntent' : function () { controller.cPrevious.call(this) },
         'AMAZON.PauseIntent' : function () { controller.stop.call(this) },
         'AMAZON.StopIntent' : function () { controller.stop.call(this) },
         'AMAZON.CancelIntent' : function () { controller.stop.call(this) },
@@ -203,6 +226,7 @@ const stateHandlers = {
             this.emit(':responseReady');
         },
         'TodayIntent': function() {
+            let today = new Date();
             if (this.attributes.dataRefresh){
                 let dr = new Date(this.attributes.dataRefresh);
                 if (dr != today) {
@@ -247,8 +271,8 @@ const stateHandlers = {
          */
         'PlayCommandIssued' : function () { controller.play.call(this) },
         'PauseCommandIssued' : function () { controller.stop.call(this) },
-        'NextCommandIssued' : function () { controller.playNext.call(this) },
-        'PreviousCommandIssued' : function () { controller.playPrevious.call(this) }
+        'NextCommandIssued' : function () { controller.cNext.call(this) },
+        'PreviousCommandIssued' : function () { controller.cPrevious.call(this) }
     }),
     resumeModeIntentHandlers : Alexa.CreateStateHandler(constants.states.RESUME_MODE, {
         /*
@@ -280,6 +304,42 @@ const stateHandlers = {
         'AMAZON.CancelIntent' : function () {
             controller.stop.call(this);
             this.emit(':responseReady');
+        },
+        'AboutIntent': function() {
+            var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We know that God uses his Word to change lives. In Romans 12:2, Paul tells Christians to \"be transformed by the renewal of your mind\". That is our aim. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
+            this.response.speak(message);
+            this.emit(':responseReady');
+        },
+        'TodayIntent': function() {
+            let today = new Date();
+            if (this.attributes.dataRefresh){
+                let dr = new Date(this.attributes.dataRefresh);
+                if (dr != today) {
+                    request(request_string, function(error, response, body) {
+                        initializeSession.call(this, body);
+
+                        var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+
+                        this.response.speak(message);
+                        controller.play.call(this);
+                    }.bind(this));
+                } else {
+                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    controller.play.call(this);
+                }
+            } else {
+                request(request_string, function(error, response, body) {
+                    initializeSession.call(this, body);
+
+                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+
+                    this.response.speak(message);
+                    controller.play.call(this);
+                }.bind(this));
+            }
         },
         'SessionEndedRequest' : function () {
             // No session ended logic
@@ -317,9 +377,13 @@ var controller = function () {
                     this.attributes.enqueuedToken = null;
 
                     if (utils.canThrowCard.call(this)) {
-                        var cardTitle = podcast.title + '(' + podcast.date + ')';
+                        var cardTitle = podcast.title + ' (' + podcast.date + ')';
                         var cardContent = podcast.description + 'The feed has been refreshed.' + '\n' + this.attributes.dataRefresh;
-                        this.response.cardRenderer(cardTitle, cardContent, null);
+                        var cardImage = {
+                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x480_RYM_Podcast.jpg',
+                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x800_RYM_Podcast.jpg'
+                        };
+                        this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
                     this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
@@ -334,9 +398,13 @@ var controller = function () {
                 this.attributes.enqueuedToken = null;
 
                 if (utils.canThrowCard.call(this)) {
-                    var cardTitle = podcast.title + '(' + podcast.date + ')';
+                    var cardTitle = podcast.title + ' (' + podcast.date + ')';
                     var cardContent = podcast.description + '\n' + this.attributes.dataRefresh;
-                    this.response.cardRenderer(cardTitle, cardContent, null);
+                    var cardImage = {
+                        'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x480_RYM_Podcast.jpg',
+                        'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x800_RYM_Podcast.jpg'
+                    };
+                    this.response.cardRenderer(cardTitle, cardContent, cardImage);
                 }
 
                 this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
@@ -350,6 +418,45 @@ var controller = function () {
              */
             this.response.audioPlayerStop();
             this.emit(':responseReady');
+        },
+        cNext: function () {
+            /*
+             * The command variant of playNext. Mostly present due to stakeholders wanting system to continue playing.
+             */
+            var index = this.attributes.index;
+            index += 1;
+            // Check for last audio file.
+            if (index === this.attributes.audioData.length) {
+                if (this.attributes.loop) {
+                    index = 0;
+                } else {
+                    // Manual attempt to reach beyond the end.
+                    var token = String(this.attributes.playOrder[this.attributes.index]);
+                    var playBehavior = 'REPLACE_ALL';
+                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
+
+                    if (utils.canThrowCard.call(this)) {
+                        var cardTitle = podcast.title + ' (' + podcast.date + ')';
+                        var cardContent = podcast.description;
+                        var cardImage = {
+                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x480_RYM_Podcast.jpg',
+                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x800_RYM_Podcast.jpg'
+                        };
+                        this.response.cardRenderer(cardTitle, cardContent, cardImage);
+                    }
+
+                    var message = 'You have reached the last available broadcast. Visit Renewing Your Mind dot org to access older broadcasts';
+                    this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
+                    return this.emit(':responseReady');
+                }
+            }
+            // Set values to attributes.
+            this.attributes.index = index;
+            this.attributes.offsetInMilliseconds = 0;
+            this.attributes.playbackIndexChanged = true;
+
+            controller.play.call(this);
         },
         playNext: function () {
             /*
@@ -368,13 +475,56 @@ var controller = function () {
                     this.handler.state = constants.states.START_MODE;
 
                     if (utils.canThrowCard.call(this)) {
-                        var cardTitle = podcast.title + '(' + podcast.date + ')';
+                        var cardTitle = podcast.title + ' (' + podcast.date + ')';
                         var cardContent = podcast.description;
-                        this.response.cardRenderer(cardTitle, cardContent, null);
+                        var cardImage = {
+                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x480_RYM_Podcast.jpg',
+                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x800_RYM_Podcast.jpg'
+                        };
+                        this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
                     var message = 'You have reached the last available broadcast. Visit Renewing Your Mind dot org to access older broadcasts';
                     this.response.speak(message).audioPlayerStop();
+                    return this.emit(':responseReady');
+                }
+            }
+            // Set values to attributes.
+            this.attributes.index = index;
+            this.attributes.offsetInMilliseconds = 0;
+            this.attributes.playbackIndexChanged = true;
+
+            controller.play.call(this);
+        },
+        cPrevious: function () {
+            /*
+             * The command variant of playPrevious. Blame the stakeholders.
+             */
+            var index = this.attributes.index;
+            index -= 1;
+            // Check for last audio file.
+            if (index === -1) {
+                if (this.attributes.loop) {
+                    index = this.attributes.audioData.length - 1;
+                } else {
+                    // Manual attempt to reach beyond the beginning.
+                    var token = String(this.attributes.playOrder[this.attributes.index]);
+                    var playBehavior = 'REPLACE_ALL';
+                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
+
+                    if (utils.canThrowCard.call(this)) {
+                        var cardTitle = podcast.title + ' (' + podcast.date + ')';
+                        var cardContent = podcast.description;
+                        var cardImage = {
+                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x480_RYM_Podcast.jpg',
+                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x800_RYM_Podcast.jpg'
+                        };
+                        this.response.cardRenderer(cardTitle, cardContent, cardImage);
+                    }
+
+                    var message = 'You are listening to the most recent broadcast.';
+                    this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
                     return this.emit(':responseReady');
                 }
             }
