@@ -18,6 +18,7 @@
     "alexa-sdk": "^1.0.4",
     "csvtojson": "^1.0.3",
     "request" : "^2.79.0"
+    "voice-insights-sdk": "^1.2.2"
   },
   "repository": {
     "type": "git",

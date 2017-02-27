@@ -1,6 +1,7 @@
 'use strict';
 
 const Alexa = require('alexa-sdk');
+const VoiceInsights = require('voice-insights-sdk');
 const request = require('request');
 const constants = require('./constants');
 const utils = require('./utils');
@@ -37,13 +38,17 @@ const stateHandlers = {
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                         let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                        this.response.speak(message);
-                        controller.play.call(this);
+                        VoiceInsights.track('StartLaunchRefresh', null, message, (error, response) => {
+                            this.response.speak(message);
+                            controller.play.call(this);
+                        });
                     }.bind(this));
                 } else {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                     let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
-                    controller.play.call(this);
+                    VoiceInsights.track('StartLaunch', null, message, (error, response) => {
+                        controller.play.call(this);
+                    });
                 }
             } else {
                 request(request_string, function(error, response, body) {
@@ -52,8 +57,10 @@ const stateHandlers = {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                     let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                    this.response.speak(message);
-                    controller.play.call(this);
+                    VoiceInsights.track('StartLaunchRefresh', null, message, (error, response) => {
+                        this.response.speak(message);
+                        controller.play.call(this);
+                    });
                 }.bind(this));
             }
         },
@@ -61,23 +68,38 @@ const stateHandlers = {
             if (!this.attributes.playOrder) {
                 request(request_string, function(error, response, body) {
                     initializeSession.call(this, body);
-                    controller.play.call(this);
+                    VoiceInsights.track('StartPlayRefresh', null, message, (error, response) => {
+                        controller.play.call(this);
+                    });
                 }.bind(this));
             } else {
-                controller.play.call(this);
+                VoiceInsights.track('StartPlay', null, message, (error, response) => {
+                    controller.play.call(this);
+                });
             }
         },
         'AMAZON.HelpIntent' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
 
-            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier broadcast, say Next. To return to the most recent broadcast, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?'
-            this.response.speak(message).listen(message);
-            this.emit(':responseReady');
+            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier broadcast, say Next. To return to the most recent broadcast, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?';
+            var reprompt = 'What can I help you with?';
+
+            var cardTitle = 'Help with Renewing Your Mind';
+            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s broadcast\" to play the most recent episode.\nSay "Next" to listen to an earlier broadcast.';
+            this.response.cardRenderer(cardTitle, cardContent, null);
+
+            VoiceInsights.track('StartHelp', null, message, (error, response) => {
+                this.response.speak(message).listen(reprompt);
+                this.emit(':responseReady');
+            });
         },
         'AboutIntent': function() {
             var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We know that God uses his Word to change lives. In Romans 12:2, Paul tells Christians to \"be transformed by the renewal of your mind\". That is our aim. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
-            this.response.speak(message);
-            this.emit(':responseReady');
+
+            VoiceInsights.track('StartAbout', null, message, (error, response) => {
+                this.response.speak(message);
+                this.emit(':responseReady');
+            });
         },
         'TodayIntent': function() {
             let today = new Date();
@@ -90,13 +112,17 @@ const stateHandlers = {
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                         let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                        this.response.speak(message);
-                        controller.play.call(this);
+                        VoiceInsights.track('StartTodayRefresh', null, message, (error, response) => {
+                            this.response.speak(message);
+                            controller.play.call(this);
+                        });
                     }.bind(this));
                 } else {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                     let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
-                    controller.play.call(this);
+                    VoiceInsights.track('StartToday', null, message, (error, response) => {
+                        controller.play.call(this);
+                    });
                 }
             } else {
                 request(request_string, function(error, response, body) {
@@ -105,8 +131,10 @@ const stateHandlers = {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                     let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                    this.response.speak(message);
-                    controller.play.call(this);
+                    VoiceInsights.track('StartTodayRefresh', null, message, (error, response) => {
+                        this.response.speak(message);
+                        controller.play.call(this);
+                    });
                 }.bind(this));
             }
         },
@@ -123,8 +151,10 @@ const stateHandlers = {
         },
         'Unhandled' : function () {
             let message = 'Sorry, I could not understand.';
-            this.response.speak(message);
-            this.emit(':responseReady');
+            VoiceInsights.track('Unhandled', null, message, (error, response) => {
+                this.response.speak(message);
+                this.emit(':responseReady');
+            });
         }
     }),
     playModeIntentHandlers : Alexa.CreateStateHandler(constants.states.PLAY_MODE, {
@@ -154,13 +184,17 @@ const stateHandlers = {
                             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                             let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                            this.response.speak(message);
-                            controller.play.call(this);
+                            VoiceInsights.track('PlayLaunchRefresh', null, message, (error, response) => {
+                                this.response.speak(message);
+                                controller.play.call(this);
+                            });
                         }.bind(this));
                     } else {
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                         let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
-                        controller.play.call(this);
+                        VoiceInsights.track('PlayLaunch', null, message, (error, response) => {
+                            controller.play.call(this);
+                        });
                     }
                 } else {
                     request(request_string, function(error, response, body) {
@@ -169,8 +203,10 @@ const stateHandlers = {
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                         let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                        this.response.speak(message);
-                        controller.play.call(this);
+                        VoiceInsights.track('PlayLaunchRefresh', null, message, (error, response) => {
+                            this.response.speak(message);
+                            controller.play.call(this);
+                        });
                     }.bind(this));
                 }
             } else {
@@ -179,11 +215,17 @@ const stateHandlers = {
                 message = 'Welcome back to Renewing Your Mind. Previously you were listening to the broadcast from ' + podcast.date + ' titled ' + podcast.title + '. Would you like to resume that broadcast? Say yes to resume, or no to play today\'s broadcast.';
                 reprompt = 'Say yes to resume the broadcast from ' + podcast.date + ' titled ' + podcast.title + ', or say no to play today\'s broadcast.';
 
-                this.response.speak(message).listen(reprompt);
-                this.emit(':responseReady');
+                VoiceInsights.track('PlayLaunchResume', null, message, (error, response) => {
+                    this.response.speak(message).listen(reprompt);
+                    this.emit(':responseReady');
+                });
             }
         },
-        'PlayAudio' : function () { controller.play.call(this) },
+        'PlayAudio' : function () {
+            VoiceInsights.track('PlayAudio', null, null, (error, response) => {
+                controller.play.call(this);
+            });
+        },
         'AMAZON.NextIntent' : function () { controller.cNext.call(this) },
         'AMAZON.PreviousIntent' : function () { controller.cPrevious.call(this) },
         'AMAZON.PauseIntent' : function () { controller.stop.call(this) },
@@ -192,38 +234,60 @@ const stateHandlers = {
         'AMAZON.ResumeIntent' : function () { controller.play.call(this) },
         'AMAZON.LoopOnIntent': function() {
             var message = 'Sorry. This skill does not support looping.';
-            this.response.speak(message);
-            this.emit(':responseReady');
+            VoiceInsights.track('PlayLoopOn', null, message, (error, response) => {
+                this.response.speak(message);
+                this.emit(':responseReady');
+            });
         },
         'AMAZON.LoopOffIntent' : function () {
             var message = 'Sorry. This skill does not support looping.';
-            this.response.speak(message);
-            this.emit(':responseReady');
+
+            VoiceInsights.track('PlayLoopOff', null, message, (error, response) => {
+                this.response.speak(message);
+                this.emit(':responseReady');
+            });
         },
         'AMAZON.ShuffleOnIntent' : function () {
             var message = 'Sorry. This skill does not support shuffling.';
-            this.response.speak(message);
-            this.emit(':responseReady');
+            VoiceInsights.track('PlayShuffleOn', null, message, (error, response) => {
+                this.response.speak(message);
+                this.emit(':responseReady');
+            });
         },
         'AMAZON.ShuffleOffIntent' : function () {
             var message = 'Sorry. This skill does not support shuffling.';
-            this.response.speak(message);
-            this.emit(':responseReady');
+            VoiceInsights.track('PlayShuffleOff', null, message, (error, response) => {
+                this.response.speak(message);
+                this.emit(':responseReady');
+            });
         },
         'AMAZON.StartOverIntent' : function () {
-            controller.startOver.call(this)
+            VoiceInsights.track('PlayStartOver', null, null, (error, response) => {
+                controller.startOver.call(this)
+            });
         },
         'AMAZON.HelpIntent' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
 
-            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier broadcast, say Next. To Return to the most recent broadcast, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?'
-            this.response.speak(message).listen(message);
-            this.emit(':responseReady');
+            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier broadcast, say Next. To Return to the most recent broadcast, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?';
+            var reprompt = 'What can I help you with?';
+
+            var cardTitle = 'Help with Renewing Your Mind';
+            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s broadcast\" to play the most recent episode.\nSay "Next" to listen to an earlier broadcast.';
+            this.response.cardRenderer(cardTitle, cardContent, null);
+
+
+            VoiceInsights.track('PlayHelp', null, message, (error, response) => {
+                this.response.speak(message).listen(reprompt);
+                this.emit(':responseReady');
+            });
         },
         'AboutIntent': function() {
             var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We know that God uses his Word to change lives. In Romans 12:2, Paul tells Christians to \"be transformed by the renewal of your mind\". That is our aim. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
-            this.response.speak(message);
-            this.emit(':responseReady');
+            VoiceInsights.track('PlayAbout', null, message, (error, response) => {
+                this.response.speak(message);
+                this.emit(':responseReady');
+            });
         },
         'TodayIntent': function() {
             let today = new Date();
@@ -236,13 +300,17 @@ const stateHandlers = {
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                         let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                        this.response.speak(message);
-                        controller.play.call(this);
+                        VoiceInsights.track('PlayTodayRefresh', null, message, (error, response) => {
+                            this.response.speak(message);
+                            controller.play.call(this);
+                        });
                     }.bind(this));
                 } else {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                     let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
-                    controller.play.call(this);
+                    VoiceInsights.track('PlayToday', null, message, (error, response) => {
+                        controller.play.call(this);
+                    });
                 }
             } else {
                 request(request_string, function(error, response, body) {
@@ -251,8 +319,10 @@ const stateHandlers = {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                     let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                    this.response.speak(message);
-                    controller.play.call(this);
+                    VoiceInsights.track('PlayTodayRefresh', null, message, (error, response) => {
+                        this.response.speak(message);
+                        controller.play.call(this);
+                    });
                 }.bind(this));
             }
         },
@@ -261,8 +331,10 @@ const stateHandlers = {
         },
         'Unhandled' : function () {
             let message = 'Sorry, I could not understand.';
-            this.response.speak(message);
-            this.emit(':responseReady');
+            VoiceInsights.track('Unhandled', null, message, (error, response) => {
+                this.response.speak(message);
+                this.emit(':responseReady');
+            });
         }
     }),
     remoteControllerHandlers : Alexa.CreateStateHandler(constants.states.PLAY_MODE, {
@@ -282,33 +354,50 @@ const stateHandlers = {
             let message = 'You were listening to ' + this.attributes.audioData[this.attributes.playOrder[this.attributes.index]].title +
                 ' Would you like to resume?';
             let reprompt = 'You can say yes to resume or no to play from the top.';
-            this.response.speak(message).listen(reprompt);
-            this.emit(':responseReady');
+            VoiceInsights.track('ResumeLaunch', null, message, (error, response) => {
+                this.response.speak(message).listen(reprompt);
+                this.emit(':responseReady');
+            });
         },
-        'AMAZON.YesIntent' : function () { controller.play.call(this) },
+        'AMAZON.YesIntent' : function () {
+            VoiceInsights.track('ResumeYes', null, null, (error, response) => {
+                controller.play.call(this)
+            });
+        },
         'AMAZON.NoIntent' : function () {
+            VoiceInsights.track('ResumeNo', null, null, (error, response) => {
                 // We can do a feed refresh on reset
                 controller.reset.call(this)
+            });
         },
         'AMAZON.HelpIntent' : function () {
             let message = 'You were listening to ' + this.attributes.audioData[this.attributes.index].title +
                 ' Would you like to resume?';
             let reprompt = 'You can say, yes to resume or no to play from the top.';
-            this.response.speak(message).listen(reprompt);
-            this.emit(':responseReady');
+
+            VoiceInsights.track('ResumeHelp', null, message, (error, response) => {
+                this.response.speak(message).listen(reprompt);
+                this.emit(':responseReady');
+            });
         },
         'AMAZON.StopIntent' : function () {
-            controller.stop.call(this);
-            this.emit(':responseReady');
+            VoiceInsights.track('ResumeStop', null, null, (error, response) => {
+                controller.stop.call(this);
+                this.emit(':responseReady');
+            });
         },
         'AMAZON.CancelIntent' : function () {
-            controller.stop.call(this);
-            this.emit(':responseReady');
+            VoiceInsights.track('ResumeCancel', null, null, (error, response) => {
+                controller.stop.call(this);
+                this.emit(':responseReady');
+            });
         },
         'AboutIntent': function() {
             var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We know that God uses his Word to change lives. In Romans 12:2, Paul tells Christians to \"be transformed by the renewal of your mind\". That is our aim. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
-            this.response.speak(message);
-            this.emit(':responseReady');
+            VoiceInsights.track('ResumeAbout', null, message, (error, response) => {
+                this.response.speak(message);
+                this.emit(':responseReady');
+            });
         },
         'TodayIntent': function() {
             let today = new Date();
@@ -321,13 +410,17 @@ const stateHandlers = {
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                         let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                        this.response.speak(message);
-                        controller.play.call(this);
+                        VoiceInsights.track('ResumeTodayRefresh', null, message, (error, response) => {
+                            this.response.speak(message);
+                            controller.play.call(this);
+                        });
                     }.bind(this));
                 } else {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                     let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
-                    controller.play.call(this);
+                    VoiceInsights.track('ResumeToday', null, message, (error, response) => {
+                        controller.play.call(this);
+                    });
                 }
             } else {
                 request(request_string, function(error, response, body) {
@@ -336,8 +429,10 @@ const stateHandlers = {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                     let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
 
-                    this.response.speak(message);
-                    controller.play.call(this);
+                    VoiceInsights.track('ResumeTodayRefresh', null, message, (error, response) => {
+                        this.response.speak(message);
+                        controller.play.call(this);
+                    });
                 }.bind(this));
             }
         },
@@ -346,8 +441,10 @@ const stateHandlers = {
         },
         'Unhandled' : function () {
             let message = 'Sorry, I could not understand.';
-            this.response.speak(message);
-            this.emit(':responseReady');
+            VoiceInsights.track('Unhandled', null, message, (error, response) => {
+                this.response.speak(message);
+                this.emit(':responseReady');
+            });
         }
     })
 };
@@ -378,10 +475,10 @@ var controller = function () {
 
                     if (utils.canThrowCard.call(this)) {
                         var cardTitle = podcast.title + ' (' + podcast.date + ')';
-                        var cardContent = podcast.description + 'The feed has been refreshed.' + '\n' + this.attributes.dataRefresh;
+                        var cardContent = podcast.description;
                         var cardImage = {
-                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x480_RYM_Podcast.jpg',
-                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x800_RYM_Podcast.jpg'
+                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x720_RYM_Podcast.jpg',
+                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x1200_RYM_Podcast.jpg'
                         };
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
@@ -397,15 +494,13 @@ var controller = function () {
                 // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
                 this.attributes.enqueuedToken = null;
 
-                if (utils.canThrowCard.call(this)) {
-                    var cardTitle = podcast.title + ' (' + podcast.date + ')';
-                    var cardContent = podcast.description + '\n' + this.attributes.dataRefresh;
-                    var cardImage = {
-                        'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x480_RYM_Podcast.jpg',
-                        'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x800_RYM_Podcast.jpg'
-                    };
-                    this.response.cardRenderer(cardTitle, cardContent, cardImage);
-                }
+                var cardTitle = podcast.title + ' (' + podcast.date + ')';
+                var cardContent = podcast.description;
+                var cardImage = {
+                    'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x720_RYM_Podcast.jpg',
+                    'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x1200_RYM_Podcast.jpg'
+                };
+                this.response.cardRenderer(cardTitle, cardContent, cardImage);
 
                 this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
                 this.emit(':responseReady');
@@ -416,8 +511,10 @@ var controller = function () {
              *  Issuing AudioPlayer.Stop directive to stop the audio.
              *  Attributes already stored when AudioPlayer.Stopped request received.
              */
-            this.response.audioPlayerStop();
-            this.emit(':responseReady');
+            VoiceInsights.track('AudioStop', null, null, (error, response) => {
+                this.response.audioPlayerStop();
+                this.emit(':responseReady');
+            });
         },
         cNext: function () {
             /*
@@ -440,23 +537,26 @@ var controller = function () {
                         var cardTitle = podcast.title + ' (' + podcast.date + ')';
                         var cardContent = podcast.description;
                         var cardImage = {
-                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x480_RYM_Podcast.jpg',
-                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x800_RYM_Podcast.jpg'
+                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x720_RYM_Podcast.jpg',
+                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x1200_RYM_Podcast.jpg'
                         };
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
                     var message = 'You have reached the last available broadcast. Visit Renewing Your Mind dot org to access older broadcasts';
-                    this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
-                    return this.emit(':responseReady');
+                    VoiceInsights.track('CommandNext', null, message, (error, response) => {
+                        this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
+                        this.emit(':responseReady');
+                    });
                 }
-            }
-            // Set values to attributes.
-            this.attributes.index = index;
-            this.attributes.offsetInMilliseconds = 0;
-            this.attributes.playbackIndexChanged = true;
+            } else {
+                // Set values to attributes.
+                this.attributes.index = index;
+                this.attributes.offsetInMilliseconds = 0;
+                this.attributes.playbackIndexChanged = true;
 
-            controller.play.call(this);
+                controller.play.call(this);
+            }
         },
         playNext: function () {
             /*
@@ -478,23 +578,26 @@ var controller = function () {
                         var cardTitle = podcast.title + ' (' + podcast.date + ')';
                         var cardContent = podcast.description;
                         var cardImage = {
-                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x480_RYM_Podcast.jpg',
-                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x800_RYM_Podcast.jpg'
+                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x720_RYM_Podcast.jpg',
+                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x1200_RYM_Podcast.jpg'
                         };
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
                     var message = 'You have reached the last available broadcast. Visit Renewing Your Mind dot org to access older broadcasts';
-                    this.response.speak(message).audioPlayerStop();
-                    return this.emit(':responseReady');
+                    VoiceInsights.track('AutoNext', null, message, (error, response) => {
+                        this.response.speak(message).audioPlayerStop();
+                        this.emit(':responseReady');
+                    });
                 }
-            }
-            // Set values to attributes.
-            this.attributes.index = index;
-            this.attributes.offsetInMilliseconds = 0;
-            this.attributes.playbackIndexChanged = true;
+            } else {
+                // Set values to attributes.
+                this.attributes.index = index;
+                this.attributes.offsetInMilliseconds = 0;
+                this.attributes.playbackIndexChanged = true;
 
-            controller.play.call(this);
+                controller.play.call(this);
+            }
         },
         cPrevious: function () {
             /*
@@ -517,23 +620,26 @@ var controller = function () {
                         var cardTitle = podcast.title + ' (' + podcast.date + ')';
                         var cardContent = podcast.description;
                         var cardImage = {
-                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x480_RYM_Podcast.jpg',
-                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x800_RYM_Podcast.jpg'
+                            'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x720_RYM_Podcast.jpg',
+                            'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x1200_RYM_Podcast.jpg'
                         };
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
                     var message = 'You are listening to the most recent broadcast.';
-                    this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
-                    return this.emit(':responseReady');
+                    VoiceInsights.track('CommandPrevious', null, message, (error, response) => {
+                        this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
+                        this.emit(':responseReady');
+                    });
                 }
-            }
-            // Set values to attributes.
-            this.attributes.index = index;
-            this.attributes.offsetInMilliseconds = 0;
-            this.attributes.playbackIndexChanged = true;
+            } else {
+                // Set values to attributes.
+                this.attributes.index = index;
+                this.attributes.offsetInMilliseconds = 0;
+                this.attributes.playbackIndexChanged = true;
 
-            controller.play.call(this);
+                controller.play.call(this);
+            }
         },
         playPrevious: function () {
             /*
@@ -552,16 +658,19 @@ var controller = function () {
                     this.handler.state = constants.states.START_MODE;
 
                     var message = 'You are listening to the most recent broadcast.';
-                    this.response.speak(message).audioPlayerStop();
-                    return this.emit(':responseReady');
+                    VoiceInsights.track('AutoPrevious', null, message, (error, response) => {
+                        this.response.speak(message).audioPlayerStop();
+                        this.emit(':responseReady');
+                    });
                 }
-            }
-            // Set values to attributes.
-            this.attributes.index = index;
-            this.attributes.offsetInMilliseconds = 0;
-            this.attributes.playbackIndexChanged = true;
+            } else {
+                // Set values to attributes.
+                this.attributes.index = index;
+                this.attributes.offsetInMilliseconds = 0;
+                this.attributes.playbackIndexChanged = true;
 
-            controller.play.call(this);
+                controller.play.call(this);
+            }
         },
         loopOn: function () {
             // Turn on loop play.
