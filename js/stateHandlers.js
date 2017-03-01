@@ -82,11 +82,11 @@ const stateHandlers = {
         'AMAZON.HelpIntent' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
 
-            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier edition, say Next. To return to the most recent edition, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?';
+            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier edition, say Previous. To return to the most recent edition, say Today\'s Edition. To learn more about Renewing Your Mind, say About. What can I help you with?';
             var reprompt = 'What can I help you with?';
 
             var cardTitle = 'Help with Renewing Your Mind';
-            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s edition\" to play the most recent edition.\nSay "Next" to listen to an earlier edition.';
+            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s edition\" to play the most recent edition.\nSay "Previous" to listen to an earlier edition.';
             this.response.cardRenderer(cardTitle, cardContent, null);
 
             VoiceInsights.track('StartHelp', null, message, (error, response) => {
@@ -270,11 +270,11 @@ const stateHandlers = {
         'AMAZON.HelpIntent' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
 
-            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier edition, say Next. To Return to the most recent edition, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?';
+            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier edition, say Previous. To return to the most recent edition, say Today\'s Edition. To learn more about Renewing Your Mind, say About. What can I help you with?';
             var reprompt = 'What can I help you with?';
 
             var cardTitle = 'Help with Renewing Your Mind';
-            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s edition\" to play the most recent edition.\nSay "Next" to listen to an earlier edition.';
+            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s edition\" to play the most recent edition.\nSay "Previous" to listen to an earlier edition.';
             this.response.cardRenderer(cardTitle, cardContent, null);
 
 
