@@ -9,7 +9,6 @@ const request_string = 'http://fiveqstaging.ligonier.org/podcasts/renewing-your-
 
 function initializeSession(body) {
     let today = new Date();
-    this.attributes.index = 0;
     this.attributes.offsetInMilliseconds = 0;
     this.attributes.loop = false;
     this.attributes.shuffle = false;
@@ -19,7 +18,8 @@ function initializeSession(body) {
     this.attributes.dataRefresh = today.toString();
     this.attributes.playOrder = Array.apply(null, {
         length: this.attributes.audioData.length
-    }).map(Number.call, Number);
+    }).map(Number.call, Number).reverse();
+    this.attributes.index = this.attributes.playOrder.indexOf(0);
 }
 
 const stateHandlers = {
@@ -36,7 +36,7 @@ const stateHandlers = {
                         initializeSession.call(this, body);
 
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                        let message = 'Welcome to Renewing Your Mind. Today\'s edition is titled ' + podcast.title;
 
                         VoiceInsights.track('StartLaunchRefresh', null, message, (error, response) => {
                             this.response.speak(message);
@@ -45,8 +45,9 @@ const stateHandlers = {
                     }.bind(this));
                 } else {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    let message = 'Welcome to Renewing Your Mind. Today\'s edition is titled ' + podcast.title;
                     VoiceInsights.track('StartLaunch', null, message, (error, response) => {
+                        this.response.speak(message);
                         controller.play.call(this);
                     });
                 }
@@ -55,7 +56,7 @@ const stateHandlers = {
                     initializeSession.call(this, body);
 
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    let message = 'Welcome to Renewing Your Mind. Today\'s edition is titled ' + podcast.title;
 
                     VoiceInsights.track('StartLaunchRefresh', null, message, (error, response) => {
                         this.response.speak(message);
@@ -68,12 +69,12 @@ const stateHandlers = {
             if (!this.attributes.playOrder) {
                 request(request_string, function(error, response, body) {
                     initializeSession.call(this, body);
-                    VoiceInsights.track('StartPlayRefresh', null, message, (error, response) => {
+                    VoiceInsights.track('StartPlayRefresh', null, null, (error, response) => {
                         controller.play.call(this);
                     });
                 }.bind(this));
             } else {
-                VoiceInsights.track('StartPlay', null, message, (error, response) => {
+                VoiceInsights.track('StartPlay', null, null, (error, response) => {
                     controller.play.call(this);
                 });
             }
@@ -81,11 +82,11 @@ const stateHandlers = {
         'AMAZON.HelpIntent' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
 
-            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier broadcast, say Next. To return to the most recent broadcast, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?';
+            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier edition, say Next. To return to the most recent edition, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?';
             var reprompt = 'What can I help you with?';
 
             var cardTitle = 'Help with Renewing Your Mind';
-            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s broadcast\" to play the most recent episode.\nSay "Next" to listen to an earlier broadcast.';
+            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s edition\" to play the most recent edition.\nSay "Next" to listen to an earlier edition.';
             this.response.cardRenderer(cardTitle, cardContent, null);
 
             VoiceInsights.track('StartHelp', null, message, (error, response) => {
@@ -94,7 +95,7 @@ const stateHandlers = {
             });
         },
         'AboutIntent': function() {
-            var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We know that God uses his Word to change lives. In Romans 12:2, Paul tells Christians to \"be transformed by the renewal of your mind\". That is our aim. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
+            var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
 
             VoiceInsights.track('StartAbout', null, message, (error, response) => {
                 this.response.speak(message);
@@ -110,7 +111,7 @@ const stateHandlers = {
                         initializeSession.call(this, body);
 
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                        let message = 'Welcome to Renewing Your Mind. Today\'s edition is titled ' + podcast.title;
 
                         VoiceInsights.track('StartTodayRefresh', null, message, (error, response) => {
                             this.response.speak(message);
@@ -119,7 +120,7 @@ const stateHandlers = {
                     }.bind(this));
                 } else {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    let message = 'Welcome to Renewing Your Mind. Today\'s edition is titled ' + podcast.title;
                     VoiceInsights.track('StartToday', null, message, (error, response) => {
                         controller.play.call(this);
                     });
@@ -129,7 +130,7 @@ const stateHandlers = {
                     initializeSession.call(this, body);
 
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    let message = 'Welcome to Renewing Your Mind. Today\'s edition is titled ' + podcast.title;
 
                     VoiceInsights.track('StartTodayRefresh', null, message, (error, response) => {
                         this.response.speak(message);
@@ -182,7 +183,7 @@ const stateHandlers = {
                             initializeSession.call(this, body);
 
                             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                            let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                            let message = 'Welcome to Renewing Your Mind. Today\'s edition is titled ' + podcast.title;
 
                             VoiceInsights.track('PlayLaunchRefresh', null, message, (error, response) => {
                                 this.response.speak(message);
@@ -191,7 +192,7 @@ const stateHandlers = {
                         }.bind(this));
                     } else {
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                        let message = 'Welcome to Renewing Your Mind. Today\'s edition is titled ' + podcast.title;
                         VoiceInsights.track('PlayLaunch', null, message, (error, response) => {
                             controller.play.call(this);
                         });
@@ -201,7 +202,7 @@ const stateHandlers = {
                         initializeSession.call(this, body);
 
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                        let message = 'Welcome to Renewing Your Mind. Today\'s edition is titled ' + podcast.title;
 
                         VoiceInsights.track('PlayLaunchRefresh', null, message, (error, response) => {
                             this.response.speak(message);
@@ -212,8 +213,8 @@ const stateHandlers = {
             } else {
                 this.handler.state = constants.states.RESUME_MODE;
                 var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                message = 'Welcome back to Renewing Your Mind. Previously you were listening to the broadcast from ' + podcast.date + ' titled ' + podcast.title + '. Would you like to resume that broadcast? Say yes to resume, or no to play today\'s broadcast.';
-                reprompt = 'Say yes to resume the broadcast from ' + podcast.date + ' titled ' + podcast.title + ', or say no to play today\'s broadcast.';
+                message = 'Welcome back to Renewing Your Mind. Previously you were listening to the edition from ' + podcast.date + ' titled ' + podcast.title + '. Would you like to resume that edition? Say yes to resume, or no to play today\'s edition.';
+                reprompt = 'Say yes to resume the edition from ' + podcast.date + ' titled ' + podcast.title + ', or say no to play today\'s edition.';
 
                 VoiceInsights.track('PlayLaunchResume', null, message, (error, response) => {
                     this.response.speak(message).listen(reprompt);
@@ -269,11 +270,11 @@ const stateHandlers = {
         'AMAZON.HelpIntent' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
 
-            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier broadcast, say Next. To Return to the most recent broadcast, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?';
+            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier edition, say Next. To Return to the most recent edition, say Today\'s Broadcast. To learn more about Renewing Your Mind, say About. What can I help you with?';
             var reprompt = 'What can I help you with?';
 
             var cardTitle = 'Help with Renewing Your Mind';
-            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s broadcast\" to play the most recent episode.\nSay "Next" to listen to an earlier broadcast.';
+            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s edition\" to play the most recent edition.\nSay "Next" to listen to an earlier edition.';
             this.response.cardRenderer(cardTitle, cardContent, null);
 
 
@@ -283,7 +284,7 @@ const stateHandlers = {
             });
         },
         'AboutIntent': function() {
-            var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We know that God uses his Word to change lives. In Romans 12:2, Paul tells Christians to \"be transformed by the renewal of your mind\". That is our aim. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
+            var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
             VoiceInsights.track('PlayAbout', null, message, (error, response) => {
                 this.response.speak(message);
                 this.emit(':responseReady');
@@ -298,7 +299,7 @@ const stateHandlers = {
                         initializeSession.call(this, body);
 
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                        let message = 'Today\'s edition is titled ' + podcast.title;
 
                         VoiceInsights.track('PlayTodayRefresh', null, message, (error, response) => {
                             this.response.speak(message);
@@ -307,7 +308,7 @@ const stateHandlers = {
                     }.bind(this));
                 } else {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    let message = 'Today\'s edition is titled ' + podcast.title;
                     VoiceInsights.track('PlayToday', null, message, (error, response) => {
                         controller.play.call(this);
                     });
@@ -317,7 +318,7 @@ const stateHandlers = {
                     initializeSession.call(this, body);
 
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    let message = 'Today\'s edition is titled ' + podcast.title;
 
                     VoiceInsights.track('PlayTodayRefresh', null, message, (error, response) => {
                         this.response.speak(message);
@@ -393,7 +394,7 @@ const stateHandlers = {
             });
         },
         'AboutIntent': function() {
-            var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We know that God uses his Word to change lives. In Romans 12:2, Paul tells Christians to \"be transformed by the renewal of your mind\". That is our aim. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
+            var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
             VoiceInsights.track('ResumeAbout', null, message, (error, response) => {
                 this.response.speak(message);
                 this.emit(':responseReady');
@@ -408,7 +409,7 @@ const stateHandlers = {
                         initializeSession.call(this, body);
 
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                        let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                        let message = 'Today\'s edition is titled ' + podcast.title;
 
                         VoiceInsights.track('ResumeTodayRefresh', null, message, (error, response) => {
                             this.response.speak(message);
@@ -417,8 +418,9 @@ const stateHandlers = {
                     }.bind(this));
                 } else {
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    let message = 'Today\'s edition is titled ' + podcast.title;
                     VoiceInsights.track('ResumeToday', null, message, (error, response) => {
+                        this.response.speak(message);
                         controller.play.call(this);
                     });
                 }
@@ -427,7 +429,7 @@ const stateHandlers = {
                     initializeSession.call(this, body);
 
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                    let message = 'Welcome to Renewing Your Mind. Today\'s broadcast is titled ' + podcast.title;
+                    let message = 'Today\'s edition is titled ' + podcast.title;
 
                     VoiceInsights.track('ResumeTodayRefresh', null, message, (error, response) => {
                         this.response.speak(message);
@@ -543,7 +545,7 @@ var controller = function () {
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
-                    var message = 'You have reached the last available broadcast. Visit Renewing Your Mind dot org to access older broadcasts';
+                    var message = 'You have reached the last available edition. Visit Renewing Your Mind dot org to access older editions';
                     VoiceInsights.track('CommandNext', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
                         this.emit(':responseReady');
@@ -584,7 +586,7 @@ var controller = function () {
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
-                    var message = 'You have reached the last available broadcast. Visit Renewing Your Mind dot org to access older broadcasts';
+                    var message = 'You have reached the last available edition. Visit Renewing Your Mind dot org to access older editions';
                     VoiceInsights.track('AutoNext', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerStop();
                         this.emit(':responseReady');
@@ -626,7 +628,7 @@ var controller = function () {
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
-                    var message = 'You are listening to the most recent broadcast.';
+                    var message = 'You are listening to the most recent edition.';
                     VoiceInsights.track('CommandPrevious', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
                         this.emit(':responseReady');
@@ -657,7 +659,7 @@ var controller = function () {
                     // Reached at the end. Thus reset state to start mode and stop playing.
                     this.handler.state = constants.states.START_MODE;
 
-                    var message = 'You are listening to the most recent broadcast.';
+                    var message = 'You are listening to the most recent edition.';
                     VoiceInsights.track('AutoPrevious', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerStop();
                         this.emit(':responseReady');
