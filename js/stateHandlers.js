@@ -546,7 +546,7 @@ var controller = function () {
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
-                    var message = 'You are listening to the most recent edition.';
+                    var message = 'You\'re listening to the most recent edition. Say, Previous, to listen to earlier editions.';
                     VoiceInsights.track('CommandNext', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
                         this.emit(':responseReady');
@@ -587,7 +587,7 @@ var controller = function () {
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
-                    var message = 'You are listening to the most recent edition.';
+                    var message = 'You\'re listening to the most recent edition. Say, Previous, to listen to earlier editions.';
                     VoiceInsights.track('AutoNext', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerStop();
                         this.emit(':responseReady');
@@ -660,7 +660,6 @@ var controller = function () {
                     // Reached at the end. Thus reset state to start mode and stop playing.
                     this.handler.state = constants.states.START_MODE;
 
-                    var message = 'You are listening to the most recent edition.';
                     var message = 'You have reached the last available edition. Visit Renewing Your Mind dot org to access older editions';
                     VoiceInsights.track('AutoPrevious', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerStop();
