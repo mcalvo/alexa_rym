@@ -46,6 +46,14 @@ var audioEventHandlers = Alexa.CreateStateHandler(constants.states.PLAY_MODE, {
          * Storing details in dynamoDB using attributes.
          * Enqueuing the next audio file.
          */
+
+        if (!this.attributes.autoplay) {
+            /*
+             * If autoplay disabled, we don't need to enqueue anything further.
+             */
+            return this.context.succeed(true);
+        }
+
         if (this.attributes.enqueuedToken) {
             /*
              * Since AudioPlayer.PlaybackNearlyFinished Directive are prone to be delivered multiple times during the

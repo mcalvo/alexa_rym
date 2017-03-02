@@ -5,11 +5,12 @@ const VoiceInsights = require('voice-insights-sdk');
 const request = require('request');
 const constants = require('./constants');
 const utils = require('./utils');
-const request_string = 'http://fiveqstaging.ligonier.org/podcasts/renewing-your-mind/alexa.json';
+const request_string = 'http://www.ligonier.org/podcasts/renewing-your-mind/alexa.json';
 
 function initializeSession(body) {
     let today = new Date();
     this.attributes.offsetInMilliseconds = 0;
+    this.attributes.autoplay = false;
     this.attributes.loop = false;
     this.attributes.shuffle = false;
     this.attributes.playbackIndexChanged = true;
@@ -545,7 +546,7 @@ var controller = function () {
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
-                    var message = 'You have reached the last available edition. Visit Renewing Your Mind dot org to access older editions';
+                    var message = 'You are listening to the most recent edition.';
                     VoiceInsights.track('CommandNext', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
                         this.emit(':responseReady');
@@ -586,7 +587,7 @@ var controller = function () {
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
-                    var message = 'You have reached the last available edition. Visit Renewing Your Mind dot org to access older editions';
+                    var message = 'You are listening to the most recent edition.';
                     VoiceInsights.track('AutoNext', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerStop();
                         this.emit(':responseReady');
@@ -628,7 +629,7 @@ var controller = function () {
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
-                    var message = 'You are listening to the most recent edition.';
+                    var message = 'You have reached the last available edition. Visit Renewing Your Mind dot org to access older editions';
                     VoiceInsights.track('CommandPrevious', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
                         this.emit(':responseReady');
@@ -660,6 +661,7 @@ var controller = function () {
                     this.handler.state = constants.states.START_MODE;
 
                     var message = 'You are listening to the most recent edition.';
+                    var message = 'You have reached the last available edition. Visit Renewing Your Mind dot org to access older editions';
                     VoiceInsights.track('AutoPrevious', null, message, (error, response) => {
                         this.response.speak(message).audioPlayerStop();
                         this.emit(':responseReady');
