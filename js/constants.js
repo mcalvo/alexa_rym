@@ -1,16 +1,14 @@
 'use strict';
 
 module.exports = Object.freeze({
-    // App-ID. Set to your own Skill App ID from the developer portal.
-    appId : 'amzn1.ask.skill.2530a1d2-cfe2-4af8-9b21-b1e9267e7d73',
-    // MIKE: 'amzn1.ask.skill.7b76b3f9-c9f6-4307-bfaa-4aa93ef72e36',
-    // TYLER: 'amzn1.ask.skill.2530a1d2-cfe2-4af8-9b21-b1e9267e7d73',
+    // App-ID. Set to your own Skill App ID from the Amazon developer portal.
+    appId : 'amzn1.ask.skill.XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX',
 
     //  DynamoDB Table name
-    dynamoDBTableName : 'RYMSessions',
+    dynamoDBTableName : 'XXXXXX',
 
-    // Voice Insights SDK
-    viAppToken: '0bfc8250-efac-11a6-0cf6-0e2486876586',
+    // Voice Insights SDK. Used for analytics.
+    viAppToken: 'XXXX-XXXX-XXXX-XXXX',
 
     /*
      *  States:
@@ -24,5 +22,15 @@ module.exports = Object.freeze({
         START_MODE : '',
         PLAY_MODE : '_PLAY_MODE',
         RESUME_MODE : '_RESUME_MODE'
-    }
+    },
+    /*
+     * API URL serving the json the skill reads from.
+     *
+     * Expected fields per JSON entry:
+     * url: Secured stream for content
+     * date: Broadcast date. Used for UX.
+     * description: Brief description of the 'episode'. Used in Cards.
+     *
+     */
+    requestString: 'http://www.ligonier.org/podcasts/renewing-your-mind/alexa.json',
 });

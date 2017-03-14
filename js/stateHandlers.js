@@ -5,7 +5,7 @@ const VoiceInsights = require('voice-insights-sdk');
 const request = require('request');
 const constants = require('./constants');
 const utils = require('./utils');
-const request_string = 'http://www.ligonier.org/podcasts/renewing-your-mind/alexa.json';
+const request_string = constants.requestString;
 
 function initializeSession(body) {
     let today = new Date();
@@ -45,7 +45,7 @@ const stateHandlers = {
                         });
                     }.bind(this));
                 } else {
-                    var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
                     let message = 'Welcome to Renewing Your Mind. Today\'s edition is titled ' + podcast.title;
                     VoiceInsights.track('StartLaunch', null, message, (error, response) => {
                         this.response.speak(message);
