@@ -214,7 +214,8 @@ const stateHandlers = {
             } else {
                 this.handler.state = constants.states.RESUME_MODE;
                 var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                message = 'Welcome back to Renewing Your Mind. Previously you were listening to the edition from ' + podcast.date + ' titled ' + podcast.title + '. Would you like to resume that edition? Say yes to resume, or no to play today\'s edition.';
+                message = 'Welcome back to Renewing Your Mind. Previously you were listening to the edition from ' + podcast.date +
+                    ' titled ' + podcast.title + '. Would you like to resume that edition?';
                 reprompt = 'Say yes to resume the edition from ' + podcast.date + ' titled ' + podcast.title + ', or say no to play today\'s edition.';
 
                 VoiceInsights.track('PlayLaunchResume', null, message, (error, response) => {
@@ -353,9 +354,12 @@ const stateHandlers = {
          *  All Intent Handlers for state : RESUME_MODE
          */
         'LaunchRequest' : function () {
-            let message = 'You were listening to ' + this.attributes.audioData[this.attributes.playOrder[this.attributes.index]].title +
-                ' Would you like to resume?';
-            let reprompt = 'You can say yes to resume or no to play from the top.';
+            var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+
+            let message = 'Welcome back to Renewing Your Mind. Previously you were listening to the edition from ' + podcast.date +
+                ' titled ' + podcast.title + '. Would you like to resume that edition?';
+            let reprompt = 'Say yes to resume the edition from ' + podcast.date + ' titled ' + podcast.title + ', or say no to play today\'s edition.';
+
             VoiceInsights.track('ResumeLaunch', null, message, (error, response) => {
                 this.response.speak(message).listen(reprompt);
                 this.emit(':responseReady');
@@ -373,9 +377,10 @@ const stateHandlers = {
             });
         },
         'AMAZON.HelpIntent' : function () {
-            let message = 'You were listening to ' + this.attributes.audioData[this.attributes.index].title +
-                ' Would you like to resume?';
-            let reprompt = 'You can say, yes to resume or no to play from the top.';
+            var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+
+            let message = 'Previously you were listening to the edition from ' + podcast.date + ' titled ' + podcast.title + '. Would you like to resume that edition?';
+            let reprompt = 'Say yes to resume the edition from ' + podcast.date + ' titled ' + podcast.title + ', or say no to play today\'s edition.';
 
             VoiceInsights.track('ResumeHelp', null, message, (error, response) => {
                 this.response.speak(message).listen(reprompt);
