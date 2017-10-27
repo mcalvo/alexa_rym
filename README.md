@@ -1,4 +1,4 @@
-# RefNet Audio App
+# RYM Audio App
 
 This skill is based off of the Alexa Skills Kit audio player example. The content below is derived from their README, with a few notable changes.
 
@@ -13,12 +13,12 @@ A few important concepts to get familiar with:
 The sample project plays a pre-defined list of audio content defined in `js/audioAssets.js`, allowing the user to control playback with a range of custom and built-in intents.  It's organized into several modules:
 
 * `index.js` is the main module that handles events from Alexa.v  Skill and register handlers defined in seperate modules.
-* `constants.js` contains constants: Amazon Application ID, DynamoDB table to track sessions, and the key for the Zipcode API.
-* `audioAssets.js` is a list of audio content the skill will play from. For this app, it is a list of Icecast Streams and the associated UTC offset.
+* `constants.js` contains constants: Amazon Application ID, DynamoDB table to track sessions, and other such information. This is managed internally.
+* `audioAssets.js` is a list of audio content the skill will play from. For this app, it pulls a list of podcast episodes from a publically available API on ligonier.org.
 * `stateHandlers.js` is where the skill handles voice intent and playback control commands.  It registers handlers for each of the input events in different states the skill can be in, and defines a `controller` that centralizes the handler code since we perform the same action for several different input events (e.g., we do the same thing when the user tells the skill to stop or if the stop button is pressed on the device).  This project has three states:
     * **START_MODE** is the default state of the skill, such as when it's invoked without an intent for the first time.
     * **PLAY_MODE** is used when audio is currently being played by the skill.
-    * **GET_ZIP** is used when configuring the system with a zipcode. This allows for the proper stream to be presented according to location.
+    * **RESUME_MODE* is used when the skill is restarting from a stopped state, such as when you swap between skills during playback.
 * `audioEventHandlers.js` is where the skill handles AudioPlayer events.  These events are only expected in the PLAY_MODE state and are used to track the user's progress through the content.
 
 You can learn more about the new [AudioPlayer interface](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/custom-audioplayer-interface-reference) and [PlaybackController interface](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/custom-playbackcontroller-interface-reference).
