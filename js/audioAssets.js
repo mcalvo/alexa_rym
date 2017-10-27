@@ -2,7 +2,7 @@
 
 const request = require('request');
 
-const request_string = 'http://fiveqstaging.ligonier.org/podcasts/rym-minute/alexa.json';
+const request_string = 'http://www.ligonier.org/podcasts/rym-minute/alexa.json';
 
 request(request_string, function(error, response, body) {
     module.exports = JSON.parse(body);
