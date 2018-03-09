@@ -1,11 +1,10 @@
 'use strict';
 
 const Alexa = require('alexa-sdk');
-const VoiceInsights = require('voice-insights-sdk');
-const request = require('request');
+const Feed = require('rss-to-json');
 const constants = require('./constants');
 const utils = require('./utils');
-const request_string = 'http://www.ligonier.org/podcasts/renewing-your-mind/alexa.json';
+const request_string = 'http://renewingyourmind.ligonier.org/rss';
 
 function initializeSession(body) {
     let today = new Date();
@@ -15,7 +14,7 @@ function initializeSession(body) {
     this.attributes.shuffle = false;
     this.attributes.playbackIndexChanged = true;
     this.handler.state = constants.states.START_MODE;
-    this.attributes.audioData = JSON.parse(body);
+    this.attributes.audioData = body.items;
     this.attributes.dataRefresh = today.toString();
     this.attributes.playOrder = Array.apply(null, {
         length: this.attributes.audioData.length
@@ -33,7 +32,7 @@ const stateHandlers = {
             if (this.attributes.dataRefresh){
                 let dr = new Date(this.attributes.dataRefresh);
                 if (dr < today) {
-                    request(request_string, function(error, response, body) {
+                    Feed.load(request_string, function(error, body){
                         initializeSession.call(this, body);
 
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -53,7 +52,7 @@ const stateHandlers = {
                     });
                 }
             } else {
-                request(request_string, function(error, response, body) {
+                Feed.load(request_string, function(error, body){
                     initializeSession.call(this, body);
 
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -68,7 +67,7 @@ const stateHandlers = {
         },
         'PlayAudio' : function () {
             if (!this.attributes.playOrder) {
-                request(request_string, function(error, response, body) {
+                Feed.load(request_string, function(error, body){
                     initializeSession.call(this, body);
                     VoiceInsights.track('StartPlayRefresh', null, null, (error, response) => {
                         controller.play.call(this);
@@ -108,7 +107,7 @@ const stateHandlers = {
             if (this.attributes.dataRefresh){
                 let dr = new Date(this.attributes.dataRefresh);
                 if (dr != today) {
-                    request(request_string, function(error, response, body) {
+                    Feed.load(request_string, function(error, body){
                         initializeSession.call(this, body);
 
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -127,7 +126,7 @@ const stateHandlers = {
                     });
                 }
             } else {
-                request(request_string, function(error, response, body) {
+                Feed.load(request_string, function(error, body){
                     initializeSession.call(this, body);
 
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -180,7 +179,7 @@ const stateHandlers = {
                 if (this.attributes.dataRefresh){
                     let dr = new Date(this.attributes.dataRefresh);
                     if (dr != today) {
-                        request(request_string, function(error, response, body) {
+                        Feed.load(request_string, function(error, body){
                             initializeSession.call(this, body);
 
                             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -199,7 +198,7 @@ const stateHandlers = {
                         });
                     }
                 } else {
-                    request(request_string, function(error, response, body) {
+                    Feed.load(request_string, function(error, body){
                         initializeSession.call(this, body);
 
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -297,7 +296,7 @@ const stateHandlers = {
             if (this.attributes.dataRefresh){
                 let dr = new Date(this.attributes.dataRefresh);
                 if (dr != today) {
-                    request(request_string, function(error, response, body) {
+                    Feed.load(request_string, function(error, body){
                         initializeSession.call(this, body);
 
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -316,7 +315,7 @@ const stateHandlers = {
                     });
                 }
             } else {
-                request(request_string, function(error, response, body) {
+                Feed.load(request_string, function(error, body){
                     initializeSession.call(this, body);
 
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -411,7 +410,7 @@ const stateHandlers = {
             if (this.attributes.dataRefresh){
                 let dr = new Date(this.attributes.dataRefresh);
                 if (dr != today) {
-                    request(request_string, function(error, response, body) {
+                    Feed.load(request_string, function(error, body){
                         initializeSession.call(this, body);
 
                         var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -431,7 +430,7 @@ const stateHandlers = {
                     });
                 }
             } else {
-                request(request_string, function(error, response, body) {
+                Feed.load(request_string, function(error, body){
                     initializeSession.call(this, body);
 
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
@@ -471,7 +470,7 @@ var controller = function () {
             this.handler.state = constants.states.PLAY_MODE;
 
             if (this.attributes['playbackFinished']) {
-                request(request_string, function(error, response, body) {
+                Feed.load(request_string, function(error, body){
                     initializeSession.call(this, body);
 
                     var token = String(this.attributes.playOrder[this.attributes.index]);
@@ -491,7 +490,7 @@ var controller = function () {
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
-                    this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
+                    this.response.audioPlayerPlay(playBehavior, podcast.url.replace("http", "https"), token, null, offsetInMilliseconds);
                     this.emit(':responseReady');
                 }.bind(this));
             } else {
@@ -723,7 +722,7 @@ var controller = function () {
         },
         reset: function () {
             // Update audioData
-            request(request_string, function(error, response, body) {
+            Feed.load(request_string, function(error, body){
                 initializeSession.call(this, body);
                 var token = String(this.attributes.playOrder[this.attributes.index]);
                 var playBehavior = 'REPLACE_ALL';
