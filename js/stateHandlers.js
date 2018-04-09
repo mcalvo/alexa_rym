@@ -4,7 +4,7 @@ const Alexa = require('alexa-sdk');
 const Feed = require('rss-to-json');
 const constants = require('./constants');
 const utils = require('./utils');
-const request_string = 'http://renewingyourmind.ligonier.org/alexa';
+const request_string = 'https://renewingyourmind.ligonier.org/alexa';
 
 function initializeSession(body) {
     let today = new Date();
@@ -24,7 +24,6 @@ function initializeSession(body) {
 
 function formatDate(milliseconds) {
     var d = new Date(milliseconds);
-    // return d.toLocaleDateString()
     let mlist = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ];
     return mlist[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
 }
