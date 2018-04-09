@@ -4,7 +4,7 @@ const Alexa = require('alexa-sdk');
 const Feed = require('rss-to-json');
 const constants = require('./constants');
 const utils = require('./utils');
-const request_string = 'http://renewingyourmind.ligonier.org/rss';
+const request_string = 'http://renewingyourmind.ligonier.org/alexa';
 
 function initializeSession(body) {
     let today = new Date();
@@ -20,6 +20,13 @@ function initializeSession(body) {
         length: this.attributes.audioData.length
     }).map(Number.call, Number).reverse();
     this.attributes.index = this.attributes.playOrder.indexOf(0);
+}
+
+function formatDate(milliseconds) {
+    var d = new Date(milliseconds);
+    // return d.toLocaleDateString()
+    let mlist = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ];
+    return mlist[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
 }
 
 const stateHandlers = {
@@ -71,12 +78,13 @@ const stateHandlers = {
         },
         'AMAZON.HelpIntent' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+            var episodeDate = formatDate(podcast.created);
 
-            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier edition, say Previous. To return to the most recent edition, say Today\'s Edition. To learn more about Renewing Your Mind, say About. What can I help you with?';
+            var message = 'You\'re listening to Renewing Your Mind for ' + episodeDate + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier edition, say Previous. To return to the most recent edition, say Today\'s Edition. To learn more about Renewing Your Mind, say About. What can I help you with?';
             var reprompt = 'What can I help you with?';
 
             var cardTitle = 'Help with Renewing Your Mind';
-            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s edition\" to play the most recent edition.\nSay "Previous" to listen to an earlier edition.';
+            var cardContent = 'You\'re listening to Renewing Your Mind for ' + episodeDate + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s edition\" to play the most recent edition.\nSay "Previous" to listen to an earlier edition.';
             this.response.cardRenderer(cardTitle, cardContent, null);
 
             this.response.speak(message).listen(reprompt);
@@ -185,9 +193,10 @@ const stateHandlers = {
             } else {
                 this.handler.state = constants.states.RESUME_MODE;
                 var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
-                message = 'Welcome back to Renewing Your Mind. Previously you were listening to the edition from ' + podcast.date +
+                var episodeDate = formatDate(podcast.created);
+                message = 'Welcome back to Renewing Your Mind. Previously you were listening to the edition from ' + episodeDate +
                     ' titled ' + podcast.title + '. Would you like to resume that edition?';
-                reprompt = 'Say yes to resume the edition from ' + podcast.date + ' titled ' + podcast.title + ', or say no to play today\'s edition.';
+                reprompt = 'Say yes to resume the edition from ' + episodeDate + ' titled ' + podcast.title + ', or say no to play today\'s edition.';
 
                 this.response.speak(message).listen(reprompt);
                 this.emit(':responseReady');
@@ -228,12 +237,13 @@ const stateHandlers = {
         },
         'AMAZON.HelpIntent' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+            var episodeDate = formatDate(podcast.created);
 
-            var message = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier edition, say Previous. To return to the most recent edition, say Today\'s Edition. To learn more about Renewing Your Mind, say About. What can I help you with?';
+            var message = 'You\'re listening to Renewing Your Mind for ' + episodeDate + ' titled ' + podcast.title + '. You can say Pause, or, Resume, to control playback. To listen to an earlier edition, say Previous. To return to the most recent edition, say Today\'s Edition. To learn more about Renewing Your Mind, say About. What can I help you with?';
             var reprompt = 'What can I help you with?';
 
             var cardTitle = 'Help with Renewing Your Mind';
-            var cardContent = 'You\'re listening to Renewing Your Mind for ' + podcast.date + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s edition\" to play the most recent edition.\nSay "Previous" to listen to an earlier edition.';
+            var cardContent = 'You\'re listening to Renewing Your Mind for ' + episodeDate + ' titled \"' + podcast.title + '\".\nSay "Pause" or "Resume" to control playback.\nSay \"Alexa, ask Renewing Your Mind to play today\'s edition\" to play the most recent edition.\nSay "Previous" to listen to an earlier edition.';
             this.response.cardRenderer(cardTitle, cardContent, null);
 
             this.response.speak(message).listen(reprompt);
@@ -299,10 +309,11 @@ const stateHandlers = {
          */
         'LaunchRequest' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+            var episodeDate = formatDate(podcast.created);
 
-            let message = 'Welcome back to Renewing Your Mind. Previously you were listening to the edition from ' + podcast.date +
+            let message = 'Welcome back to Renewing Your Mind. Previously you were listening to the edition from ' + episodeDate +
                 ' titled ' + podcast.title + '. Would you like to resume that edition?';
-            let reprompt = 'Say yes to resume the edition from ' + podcast.date + ' titled ' + podcast.title + ', or say no to play today\'s edition.';
+            let reprompt = 'Say yes to resume the edition from ' + episodeDate + ' titled ' + podcast.title + ', or say no to play today\'s edition.';
 
             this.response.speak(message).listen(reprompt);
             this.emit(':responseReady');
@@ -329,9 +340,10 @@ const stateHandlers = {
         },
         'AMAZON.HelpIntent' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+            var episodeDate = formatDate(podcast.created);
 
-            let message = 'Previously you were listening to the edition from ' + podcast.date + ' titled ' + podcast.title + '. Would you like to resume that edition?';
-            let reprompt = 'Say yes to resume the edition from ' + podcast.date + ' titled ' + podcast.title + ', or say no to play today\'s edition.';
+            let message = 'Previously you were listening to the edition from ' + episodeDate + ' titled ' + podcast.title + '. Would you like to resume that edition?';
+            let reprompt = 'Say yes to resume the edition from ' + episodeDate + ' titled ' + podcast.title + ', or say no to play today\'s edition.';
 
             this.response.speak(message).listen(reprompt);
             this.emit(':responseReady');
@@ -412,13 +424,14 @@ var controller = function () {
                     var token = String(this.attributes.playOrder[this.attributes.index]);
                     var playBehavior = 'REPLACE_ALL';
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    var episodeDate = formatDate(podcast.created);
                     var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
                     // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
                     this.attributes.enqueuedToken = null;
 
                     if (utils.canThrowCard.call(this)) {
-                        var cardTitle = podcast.title + ' (' + podcast.date + ')';
-                        var cardContent = podcast.description;
+                        var cardTitle = podcast.title + ' (' + episodeDate + ')';
+                        var cardContent = podcast.itunes_subtitle;
                         var cardImage = {
                             'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x720_RYM_Podcast.jpg',
                             'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x1200_RYM_Podcast.jpg'
@@ -433,12 +446,13 @@ var controller = function () {
                 var token = String(this.attributes.playOrder[this.attributes.index]);
                 var playBehavior = 'REPLACE_ALL';
                 var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                var episodeDate = formatDate(podcast.created);
                 var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
                 // Since play behavior is REPLACE_ALL, enqueuedToken attribute need to be set to null.
                 this.attributes.enqueuedToken = null;
 
-                var cardTitle = podcast.title + ' (' + podcast.date + ')';
-                var cardContent = podcast.description;
+                var cardTitle = podcast.title + ' (' + episodeDate + ')';
+                var cardContent = podcast.itunes_subtitle;
                 var cardImage = {
                     'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x720_RYM_Podcast.jpg',
                     'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x1200_RYM_Podcast.jpg'
@@ -472,11 +486,12 @@ var controller = function () {
                     var token = String(this.attributes.playOrder[this.attributes.index]);
                     var playBehavior = 'REPLACE_ALL';
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    var episodeDate = formatDate(podcast.created);
                     var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
 
                     if (utils.canThrowCard.call(this)) {
-                        var cardTitle = podcast.title + ' (' + podcast.date + ')';
-                        var cardContent = podcast.description;
+                        var cardTitle = podcast.title + ' (' + episodeDate + ')';
+                        var cardContent = podcast.itunes_subtitle;
                         var cardImage = {
                             'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x720_RYM_Podcast.jpg',
                             'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x1200_RYM_Podcast.jpg'
@@ -514,8 +529,9 @@ var controller = function () {
                     this.handler.state = constants.states.START_MODE;
 
                     if (utils.canThrowCard.call(this)) {
-                        var cardTitle = podcast.title + ' (' + podcast.date + ')';
-                        var cardContent = podcast.description;
+                        var episodeDate = formatDate(podcast.created);
+                        var cardTitle = podcast.title + ' (' + episodeDate + ')';
+                        var cardContent = podcast.itunes_subtitle;
                         var cardImage = {
                             'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x720_RYM_Podcast.jpg',
                             'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x1200_RYM_Podcast.jpg'
@@ -551,11 +567,12 @@ var controller = function () {
                     var token = String(this.attributes.playOrder[this.attributes.index]);
                     var playBehavior = 'REPLACE_ALL';
                     var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
+                    var episodeDate = formatDate(podcast.created);
                     var offsetInMilliseconds = this.attributes.offsetInMilliseconds;
 
                     if (utils.canThrowCard.call(this)) {
-                        var cardTitle = podcast.title + ' (' + podcast.date + ')';
-                        var cardContent = podcast.description;
+                        var cardTitle = podcast.title + ' (' + episodeDate + ')';
+                        var cardContent = podcast.itunes_subtitle;
                         var cardImage = {
                             'smallImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/720x720_RYM_Podcast.jpg',
                             'largeImageUrl': 'https://s3.us-east-2.amazonaws.com/ligonier-audio-app/1200x1200_RYM_Podcast.jpg'
