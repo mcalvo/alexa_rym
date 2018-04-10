@@ -438,7 +438,7 @@ var controller = function () {
                         this.response.cardRenderer(cardTitle, cardContent, cardImage);
                     }
 
-                    this.response.audioPlayerPlay(playBehavior, podcast.url.replace("http", "https"), token, null, offsetInMilliseconds);
+                    this.response.audioPlayerPlay(playBehavior, podcast.enclosures[0].url, token, null, offsetInMilliseconds);
                     this.emit(':responseReady');
                 }.bind(this));
             } else {
@@ -458,7 +458,7 @@ var controller = function () {
                 };
                 this.response.cardRenderer(cardTitle, cardContent, cardImage);
 
-                this.response.audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
+                this.response.audioPlayerPlay(playBehavior, podcast.enclosures[0].url, token, null, offsetInMilliseconds);
                 this.emit(':responseReady');
             }
         },
@@ -499,7 +499,7 @@ var controller = function () {
                     }
 
                     var message = 'You\'re listening to the most recent edition. Say, Previous, to listen to earlier editions.';
-                    this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
+                    this.response.speak(message).audioPlayerPlay(playBehavior, podcast.enclosures[0].url, token, null, offsetInMilliseconds);
                     this.emit(':responseReady');
                 }
             } else {
@@ -580,7 +580,7 @@ var controller = function () {
                     }
 
                     var message = 'You have reached the last available edition. Visit Renewing Your Mind dot org to access older editions';
-                    this.response.speak(message).audioPlayerPlay(playBehavior, podcast.url, token, null, offsetInMilliseconds);
+                    this.response.speak(message).audioPlayerPlay(playBehavior, podcast.enclosures[0].url, token, null, offsetInMilliseconds);
                     this.emit(':responseReady');
                 }
             } else {
