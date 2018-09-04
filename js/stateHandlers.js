@@ -75,6 +75,16 @@ const stateHandlers = {
                 controller.play.call(this);
             }
         },
+        'AMAZON.ResumeIntent' : function () { 
+	    if (!this.attributes.playOrder) {
+                Feed.load(request_string, function(error, body){
+                    initializeSession.call(this, body);
+                    controller.play.call(this);
+                }.bind(this));
+            } else {
+                controller.play.call(this);
+            }
+	},
         'AMAZON.HelpIntent' : function () {
             var podcast = this.attributes.audioData[this.attributes.playOrder[this.attributes.index]];
             var episodeDate = formatDate(podcast.created);
@@ -130,6 +140,18 @@ const stateHandlers = {
             controller.stop.call(this);
             this.emit(':responseReady');
         },
+        'AMAZON.PauseIntent' : function () { 
+	    controller.stop.call(this);
+            this.emit(':responseReady');
+	},
+        'AMAZON.NextIntent' : function () { 
+	    controller.cNext.call(this);
+            this.emit(':responseReady');
+	},
+        'AMAZON.PreviousIntent' : function () { 
+	    controller.cPrevious.call(this);
+            this.emit(':responseReady');
+	},
         'AMAZON.CancelIntent' : function () {
             controller.stop.call(this);
             this.emit(':responseReady');
@@ -351,10 +373,22 @@ const stateHandlers = {
             controller.stop.call(this);
             this.emit(':responseReady');
         },
+        'AMAZON.PauseIntent' : function () { 
+	    controller.stop.call(this);
+            this.emit(':responseReady');
+	},
         'AMAZON.CancelIntent' : function () {
             controller.stop.call(this);
             this.emit(':responseReady');
         },
+	'AMAZON.NextIntent' : function () { 
+	    controller.cNext.call(this); 
+            this.emit(':responseReady');
+	},
+        'AMAZON.PreviousIntent' : function () { 
+	    controller.cPrevious.call(this);
+            this.emit(':responseReady');
+	},
         'AboutIntent': function() {
             var message = 'Renewing Your Mind is an outreach of Ligonier Ministries, an international Christian discipleship organization founded in 1971 by Dr. R.C. Sprole. We\'re committed to faithfully presenting the unvarnished truth of Scripture, helping you to know what you believe, why you believe it, how to live it and how to share it.'
             this.response.speak(message);
